@@ -1,0 +1,37 @@
+schema: spec-driven
+
+context: |
+  Project: Food Store — E-commerce de productos alimenticios
+  Domain: E-commerce con catálogo, carrito, pedidos y pagos online
+
+  Tech stack:
+    Backend: FastAPI · SQLModel · PostgreSQL · Alembic · bcrypt · python-jose · slowapi · MercadoPago SDK
+    Frontend: React · TypeScript · Vite · TanStack Query · TanStack Form · Zustand · Axios · Tailwind CSS · Recharts
+
+  Architecture:
+    - Layered architecture: routes → services → repositories → models
+    - REST API at http://localhost:8000, docs at /docs
+    - Frontend SPA at http://localhost:5173
+    - JWT auth with RBAC and refresh tokens
+    - Unit of Work pattern for transactions
+    - FSM for order status transitions
+    - Audit trail on order changes
+
+  Actors: Cliente, Empleado, Admin
+
+  Source of truth docs (read before proposing):
+    - docs/Descripcion.txt   — vision, actors, tech stack
+    - docs/Integrador.txt    — layered arch, ERD, REST API, design patterns
+    - docs/Historias_de_usuario.txt — US-000 to US-076 with acceptance criteria
+
+  Implementation order:
+    us-000-setup, us-001-auth, us-002-categorias, us-003-productos,
+    us-004-carrito, us-005-pedidos, us-006-pagos-mercadopago,
+    us-007-admin, us-008-direcciones
+
+  Conventions:
+    - Conventional commits: feat(modulo): description
+    - Python: snake_case, type hints everywhere
+    - TypeScript: strict mode, no any
+    - Tests: pytest for backend, Vitest + Testing Library for frontend
+    - DB migrations via Alembic only — never modify tables manually
