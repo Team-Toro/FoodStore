@@ -1,5 +1,7 @@
+// redesigned in us-009 (Phase 3 — Store: catalog, product, cart)
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ShoppingBag, Trash2, X } from 'lucide-react'
 import { useCartStore } from '../../../app/store/cartStore'
 import { useUiStore } from '../../../app/store/uiStore'
 import { usePaymentStore } from '../../../app/store/paymentStore'
@@ -9,6 +11,11 @@ import type { CartItem } from '../../../types/cart'
 import { mapCartToCrearPedidoRequest } from '../../../shared/helpers/mapCartToPedido'
 import { DireccionSelector } from '../../direcciones/components/DireccionSelector'
 import { apiClient } from '../../../api/axiosClient'
+import { Drawer, DrawerHeader, DrawerTitle, DrawerBody, DrawerFooter } from '../../../shared/ui/Drawer'
+import { Button } from '../../../shared/ui/Button'
+import { Badge } from '../../../shared/ui/Badge'
+import { EmptyState } from '../../../shared/ui/EmptyState'
+import { Dialog } from '../../../shared/ui/Dialog'
 
 interface PriceChange {
   productoId: number
@@ -29,60 +36,62 @@ function CartItemRow({ item }: CartItemRowProps): JSX.Element {
   const removeItem = useCartStore((s) => s.removeItem)
 
   return (
-    <div className="flex gap-3 py-3 border-b last:border-b-0">
-      {item.imagenUrl && (
+    <div className="flex gap-3 py-3 border-b border-border last:border-b-0">
+      {/* Thumbnail */}
+      {item.imagenUrl ? (
         <img
           src={item.imagenUrl}
           alt={item.nombre}
-          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+          className="w-14 h-14 object-cover rounded-card flex-shrink-0 border border-border/50"
         />
+      ) : (
+        <div className="w-14 h-14 rounded-card bg-bg-subtle border border-border/50 flex-shrink-0" />
       )}
+
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 truncate">{item.nombre}</p>
+        <p className="font-medium text-fg text-sm leading-snug truncate">{item.nombre}</p>
 
         {item.exclusiones.length > 0 && (
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-fg-muted mt-0.5 truncate">
             Sin: {item.exclusiones.join(', ')}
           </p>
         )}
 
+        {/* Stepper */}
         <div className="flex items-center gap-2 mt-2">
-          {/* Stepper */}
-          <div className="flex items-center border border-gray-300 rounded overflow-hidden">
+          <div className="inline-flex items-center border border-border rounded-btn overflow-hidden">
             <button
               onClick={() => updateCantidad(item.productoId, item.cantidad - 1)}
-              className="px-2 py-0.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm"
+              className="px-2 py-0.5 bg-bg-subtle hover:bg-bg-elevated text-fg text-sm transition-colors"
               aria-label="Disminuir cantidad"
             >
               −
             </button>
-            <span className="px-2 text-sm font-medium min-w-[1.5rem] text-center">
+            <span className="px-2 text-sm font-medium min-w-[1.5rem] text-center text-fg">
               {item.cantidad}
             </span>
             <button
               onClick={() => updateCantidad(item.productoId, item.cantidad + 1)}
-              className="px-2 py-0.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm"
+              className="px-2 py-0.5 bg-bg-subtle hover:bg-bg-elevated text-fg text-sm transition-colors"
               aria-label="Aumentar cantidad"
             >
               +
             </button>
           </div>
-
-          <span className="text-sm text-gray-500">
-            ${item.precio.toFixed(2)} c/u
-          </span>
+          <span className="text-xs text-fg-muted">${item.precio.toFixed(2)} c/u</span>
         </div>
       </div>
 
+      {/* Line subtotal + remove */}
       <div className="flex flex-col items-end justify-between flex-shrink-0">
         <button
           onClick={() => removeItem(item.productoId)}
-          className="text-gray-400 hover:text-red-500 transition-colors"
-          aria-label="Eliminar ítem"
+          className="text-fg-muted hover:text-danger transition-colors p-0.5 rounded"
+          aria-label={`Eliminar ${item.nombre}`}
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
-        <span className="font-semibold text-gray-900 text-sm">
+        <span className="font-semibold text-fg text-sm">
           ${(item.precio * item.cantidad).toFixed(2)}
         </span>
       </div>
@@ -94,34 +103,27 @@ function CartItemRow({ item }: CartItemRowProps): JSX.Element {
 // ClearCartModal
 // ---------------------------------------------------------------------------
 interface ClearCartModalProps {
+  open: boolean
   onConfirm: () => void
   onCancel: () => void
 }
 
-function ClearCartModal({ onConfirm, onCancel }: ClearCartModalProps): JSX.Element {
+function ClearCartModal({ open, onConfirm, onCancel }: ClearCartModalProps): JSX.Element {
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-sm mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Vaciar carrito</h3>
-        <p className="text-gray-600 text-sm mb-6">
-          ¿Seguro que querés eliminar todos los productos del carrito?
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Vaciar
-          </button>
-        </div>
+    <Dialog open={open} onClose={onCancel} aria-label="Vaciar carrito">
+      <h3 className="text-lg font-semibold text-fg mb-2">Vaciar carrito</h3>
+      <p className="text-fg-muted text-sm mb-6">
+        ¿Seguro que querés eliminar todos los productos del carrito?
+      </p>
+      <div className="flex gap-3">
+        <Button variant="secondary" className="flex-1" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button variant="danger" className="flex-1" onClick={onConfirm}>
+          Vaciar
+        </Button>
       </div>
-    </div>
+    </Dialog>
   )
 }
 
@@ -129,47 +131,40 @@ function ClearCartModal({ onConfirm, onCancel }: ClearCartModalProps): JSX.Eleme
 // PriceChangedModal
 // ---------------------------------------------------------------------------
 interface PriceChangedModalProps {
+  open: boolean
   changes: PriceChange[]
   onConfirm: () => void
   onCancel: () => void
 }
 
-function PriceChangedModal({ changes, onConfirm, onCancel }: PriceChangedModalProps): JSX.Element {
+function PriceChangedModal({ open, changes, onConfirm, onCancel }: PriceChangedModalProps): JSX.Element {
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-sm mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Precios actualizados</h3>
-        <p className="text-gray-600 text-sm mb-4">
-          Los siguientes productos cambiaron de precio desde que los agregaste al carrito:
-        </p>
-        <ul className="space-y-2 mb-5">
-          {changes.map((c) => (
-            <li key={c.productoId} className="text-sm flex justify-between items-center">
-              <span className="text-gray-800 font-medium truncate max-w-[160px]">{c.nombre}</span>
-              <span className="text-gray-500 ml-2 flex-shrink-0">
-                <span className="line-through text-red-400">${c.precioAnterior.toFixed(2)}</span>
-                {' → '}
-                <span className="text-green-600 font-semibold">${c.precioActual.toFixed(2)}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-          >
-            Continuar
-          </button>
-        </div>
+    <Dialog open={open} onClose={onCancel} aria-label="Precios actualizados">
+      <h3 className="text-lg font-semibold text-fg mb-2">Precios actualizados</h3>
+      <p className="text-fg-muted text-sm mb-4">
+        Los siguientes productos cambiaron de precio desde que los agregaste al carrito:
+      </p>
+      <ul className="space-y-2 mb-5">
+        {changes.map((c) => (
+          <li key={c.productoId} className="text-sm flex justify-between items-center">
+            <span className="text-fg font-medium truncate max-w-[160px]">{c.nombre}</span>
+            <span className="text-fg-muted ml-2 flex-shrink-0">
+              <span className="line-through text-danger-fg">${c.precioAnterior.toFixed(2)}</span>
+              {' → '}
+              <span className="text-success-fg font-semibold">${c.precioActual.toFixed(2)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="flex gap-3">
+        <Button variant="secondary" className="flex-1" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button variant="primary" className="flex-1" onClick={onConfirm}>
+          Continuar
+        </Button>
       </div>
-    </div>
+    </Dialog>
   )
 }
 
@@ -201,7 +196,7 @@ async function fetchPriceChanges(items: CartItem[]): Promise<PriceChange[]> {
 // ---------------------------------------------------------------------------
 // CartDrawer
 // ---------------------------------------------------------------------------
-export function CartDrawer(): JSX.Element {
+export function CartDrawer(): JSX.Element | null {
   const cartOpen = useUiStore((s) => s.cartOpen)
   const closeCart = useUiStore((s) => s.closeCart)
 
@@ -209,6 +204,8 @@ export function CartDrawer(): JSX.Element {
   const subtotal = useCartStore((s) => s.subtotal)
   const clearCart = useCartStore((s) => s.clearCart)
   const updatePrecio = useCartStore((s) => s.updatePrecio)
+  // Reactive item count inline selector (avoids non-reactive function selector pattern)
+  const itemCount = useCartStore((s) => s.items.reduce((acc, i) => acc + i.cantidad, 0))
 
   const [showClearModal, setShowClearModal] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
@@ -279,49 +276,48 @@ export function CartDrawer(): JSX.Element {
     proceedCheckout()
   }
 
-  if (!cartOpen) return <></>
+  if (!cartOpen) return null
 
   return (
     <>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40"
-        onClick={closeCart}
-        aria-hidden="true"
-      />
-
-      {/* Drawer */}
-      <aside
-        className="fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col"
-        role="dialog"
+      <Drawer
+        open={cartOpen}
+        onClose={closeCart}
+        side="right"
+        panelWidth="w-full max-w-sm"
         aria-label="Carrito de compras"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Tu carrito</h2>
+        <DrawerHeader>
+          <div className="flex items-center gap-2">
+            <DrawerTitle>Tu carrito</DrawerTitle>
+            {itemCount > 0 && (
+              <Badge variant="brand">{itemCount}</Badge>
+            )}
+          </div>
           <button
             onClick={closeCart}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="text-fg-muted hover:text-fg transition-colors p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             aria-label="Cerrar carrito"
           >
-            ×
+            <X className="h-5 w-5" />
           </button>
-        </div>
+        </DrawerHeader>
 
-        {/* Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Body — items or empty state */}
+        <DrawerBody>
           {items.length === 0 ? (
-            <div
-              className="flex flex-col items-center justify-center h-full text-center gap-4"
-              data-testid="cart-empty"
-            >
-              <p className="text-gray-500 text-lg">Tu carrito está vacío</p>
-              <button
-                onClick={handleGoToCatalogo}
-                className="text-indigo-600 hover:underline text-sm font-medium"
-              >
-                Ver catálogo
-              </button>
+            <div data-testid="cart-empty">
+              <EmptyState
+                icon={ShoppingBag}
+                title="Tu carrito está vacío"
+                description="Agregá productos del menú para comenzar tu pedido."
+                action={
+                  <Button variant="secondary" onClick={handleGoToCatalogo}>
+                    Ver catálogo
+                  </Button>
+                }
+              />
             </div>
           ) : (
             <div>
@@ -330,40 +326,48 @@ export function CartDrawer(): JSX.Element {
               ))}
             </div>
           )}
-        </div>
+        </DrawerBody>
 
-        {/* Footer — only shown when cart has items */}
+        {/* Sticky footer — only shown when cart has items */}
         {items.length > 0 && (
-          <div className="border-t p-4 space-y-3">
+          <DrawerFooter className="space-y-4">
             {/* Delivery address selector */}
             <DireccionSelector />
 
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between text-gray-600">
+            {/* Totals */}
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between text-fg-muted">
                 <span>Subtotal</span>
                 <span>${subtotal().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-fg-muted">
                 <span>Envío</span>
                 <span>{costoEnvio === 0 ? 'Gratis' : `$${costoEnvio.toFixed(2)}`}</span>
               </div>
-              <div className="flex justify-between font-bold text-gray-900 text-base pt-1 border-t">
+              <div className="flex justify-between font-bold text-fg text-base pt-2 border-t border-border">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
 
-            <button
+            {/* Actions */}
+            <Button
+              variant="danger"
+              size="sm"
+              className="w-full"
               onClick={() => setShowClearModal(true)}
-              className="w-full border border-red-300 text-red-600 py-2 rounded-lg text-sm hover:bg-red-50 transition-colors"
             >
+              <Trash2 className="h-4 w-4" />
               Vaciar carrito
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
               onClick={() => void handleCheckout()}
               disabled={crearPedido.isPending || isRedirecting || validating}
-              className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={crearPedido.isPending || isRedirecting || validating}
             >
               {isRedirecting
                 ? 'Redirigiendo al pago...'
@@ -372,27 +376,30 @@ export function CartDrawer(): JSX.Element {
                   : validating
                     ? 'Validando precios...'
                     : 'Confirmar y Pagar'}
-            </button>
+            </Button>
+
             {(crearPedido.isError || checkoutError) && (
-              <p className="text-xs text-red-600 text-center">
+              <p className="text-xs text-danger-fg text-center">
                 {checkoutError ?? 'Error al crear el pedido. Verificá el stock e intentá de nuevo.'}
               </p>
             )}
-          </div>
+          </DrawerFooter>
         )}
-      </aside>
+      </Drawer>
 
-      {/* Clear confirmation modal */}
+      {/* Clear confirmation modal — only mounted when triggered */}
       {showClearModal && (
         <ClearCartModal
+          open={showClearModal}
           onConfirm={handleConfirmClear}
           onCancel={() => setShowClearModal(false)}
         />
       )}
 
-      {/* Price changed modal */}
+      {/* Price changed modal — only mounted when triggered */}
       {priceChanges && priceChanges.length > 0 && (
         <PriceChangedModal
+          open
           changes={priceChanges}
           onConfirm={handlePriceChangesConfirm}
           onCancel={() => setPriceChanges(null)}

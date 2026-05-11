@@ -1,3 +1,4 @@
+// redesigned in us-009 — Phase 6
 import {
   BarChart,
   Bar,
@@ -6,7 +7,13 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  type TooltipProps,
 } from 'recharts'
+import { Card } from '../../../shared/ui/Card'
+import { Skeleton } from '../../../shared/ui/Skeleton'
+import { EmptyState } from '../../../shared/ui/EmptyState'
+import { ShoppingBag } from 'lucide-react'
+import { useChartTheme } from '../hooks/useChartTheme'
 import type { TopProducto } from '../../../api/admin'
 
 interface TopProductosBarChartProps {
@@ -14,11 +21,28 @@ interface TopProductosBarChartProps {
   loading?: boolean
 }
 
+// ---------------------------------------------------------------------------
+// Custom tooltip
+// ---------------------------------------------------------------------------
+function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null
+  return (
+    <Card variant="elevated" className="p-3 text-sm shadow-lg">
+      <p className="text-fg-muted mb-0.5">{label}</p>
+      <p className="font-semibold text-fg">{payload[0]?.value} unidades</p>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// TopProductosBarChart
+// ---------------------------------------------------------------------------
 export function TopProductosBarChart({
   data,
   loading = false,
 }: TopProductosBarChartProps): JSX.Element {
-  // Take at most 10, sort descending by cantidad_vendida
+  const theme = useChartTheme()
+
   const chartData = [...data]
     .sort((a, b) => b.cantidad_vendida - a.cantidad_vendida)
     .slice(0, 10)
@@ -29,19 +53,20 @@ export function TopProductosBarChart({
     }))
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-      <h2 className="text-base font-semibold text-gray-900 mb-4">
+    <Card variant="elevated" className="p-5">
+      <h2 className="text-base font-semibold text-fg mb-4">
         Top 10 productos por unidades vendidas
       </h2>
 
-      {loading && (
-        <div className="animate-pulse h-48 bg-gray-100 rounded" />
-      )}
+      {loading && <Skeleton height="h-[260px]" />}
 
       {!loading && chartData.length === 0 && (
-        <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-          Sin datos para el período seleccionado
-        </div>
+        <EmptyState
+          icon={ShoppingBag}
+          title="Sin datos"
+          description="No hay productos vendidos para el período seleccionado."
+          className="py-8"
+        />
       )}
 
       {!loading && chartData.length > 0 && (
@@ -51,20 +76,30 @@ export function TopProductosBarChart({
             data={chartData}
             margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={theme.grid} />
+            <XAxis
+              type="number"
+              tick={{ fill: theme.axis, fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+            />
             <YAxis
               type="category"
               dataKey="nombre"
               width={140}
-              tick={{ fontSize: 11 }}
+              tick={{ fill: theme.axis, fontSize: 11 }}
               tickLine={false}
+              axisLine={false}
             />
-            <Tooltip formatter={(value: number) => [value, 'Unidades vendidas']} />
-            <Bar dataKey="cantidad" fill="#4f46e5" radius={[0, 4, 4, 0]} />
+            <Tooltip content={<BarTooltip />} />
+            <Bar
+              dataKey="cantidad"
+              fill={theme.accent}
+              radius={[0, 4, 4, 0]}
+            />
           </BarChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </Card>
   )
 }

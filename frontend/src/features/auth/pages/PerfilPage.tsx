@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMe } from '../hooks/useMe'
 import { updatePerfil, changePassword } from '../api/authApi'
+import { Card, CardBody } from '../../../shared/ui/Card'
+import { Input } from '../../../shared/ui/Input'
+import { Label } from '../../../shared/ui/Label'
+import { Button } from '../../../shared/ui/Button'
+import { Badge } from '../../../shared/ui/Badge'
+import { Spinner } from '../../../shared/ui/Spinner'
 
 export function PerfilPage(): JSX.Element {
   const queryClient = useQueryClient()
@@ -87,134 +93,135 @@ export function PerfilPage(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <Spinner size="lg" />
       </div>
     )
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Mi perfil</h1>
+      <h1 className="text-2xl font-bold text-fg">Mi perfil</h1>
 
       {/* Info de cuenta (solo lectura) */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-        <p className="text-gray-900">{user?.email}</p>
-        <p className="text-sm font-medium text-gray-500 mt-3 mb-1">Roles</p>
-        <div className="flex gap-2 flex-wrap">
-          {user?.roles.map((r) => (
-            <span
-              key={r}
-              className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700"
-            >
-              {r}
-            </span>
-          ))}
-        </div>
-      </div>
+      <Card variant="outline">
+        <CardBody>
+          <p className="text-sm font-medium text-fg-muted mb-1">Email</p>
+          <p className="text-fg">{user?.email}</p>
+          <p className="text-sm font-medium text-fg-muted mt-3 mb-2">Roles</p>
+          <div className="flex gap-2 flex-wrap">
+            {user?.roles.map((r) => (
+              <Badge key={r} variant="brand">{r}</Badge>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Editar datos personales */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Datos personales</h2>
-        <form onSubmit={handlePerfilSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-              <input
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              />
+      <Card variant="outline">
+        <CardBody>
+          <h2 className="text-base font-semibold text-fg mb-4">Datos personales</h2>
+          <form onSubmit={handlePerfilSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="perfil-nombre">Nombre</Label>
+                <Input
+                  id="perfil-nombre"
+                  type="text"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="perfil-apellido">Apellido</Label>
+                <Input
+                  id="perfil-apellido"
+                  type="text"
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-              <input
-                type="text"
-                value={apellido}
-                onChange={(e) => setApellido(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              <Label htmlFor="perfil-telefono">
+                Teléfono <span className="text-fg-muted font-normal">(opcional)</span>
+              </Label>
+              <Input
+                id="perfil-telefono"
+                type="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="+54 11 1234-5678"
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Teléfono <span className="text-gray-400 font-normal">(opcional)</span>
-            </label>
-            <input
-              type="tel"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              placeholder="+54 11 1234-5678"
-            />
-          </div>
-          {perfilMsg && (
-            <p className={`text-sm font-medium ${perfilMsg.ok ? 'text-green-600' : 'text-red-600'}`}>
-              {perfilMsg.text}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={perfilMutation.isPending}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
-          >
-            {perfilMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </form>
-      </div>
+            {perfilMsg && (
+              <p className={`text-sm font-medium ${perfilMsg.ok ? 'text-success-fg' : 'text-danger-fg'}`}>
+                {perfilMsg.text}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={perfilMutation.isPending}
+              loading={perfilMutation.isPending}
+            >
+              {perfilMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          </form>
+        </CardBody>
+      </Card>
 
       {/* Cambiar contraseña */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Cambiar contraseña</h2>
-        <form onSubmit={handlePassSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
-            <input
-              type="password"
-              value={passwordActual}
-              onChange={(e) => setPasswordActual(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              autoComplete="current-password"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
-            <input
-              type="password"
-              value={passwordNuevo}
-              onChange={(e) => setPasswordNuevo(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              autoComplete="new-password"
-              placeholder="Mínimo 8 caracteres"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirmar nueva contraseña
-            </label>
-            <input
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              autoComplete="new-password"
-            />
-          </div>
-          {passMsg && (
-            <p className={`text-sm font-medium ${passMsg.ok ? 'text-green-600' : 'text-red-600'}`}>
-              {passMsg.text}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={passMutation.isPending}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
-          >
-            {passMutation.isPending ? 'Cambiando...' : 'Cambiar contraseña'}
-          </button>
-        </form>
-      </div>
+      <Card variant="outline">
+        <CardBody>
+          <h2 className="text-base font-semibold text-fg mb-4">Cambiar contraseña</h2>
+          <form onSubmit={handlePassSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="pass-actual">Contraseña actual</Label>
+              <Input
+                id="pass-actual"
+                type="password"
+                value={passwordActual}
+                onChange={(e) => setPasswordActual(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pass-nuevo">Nueva contraseña</Label>
+              <Input
+                id="pass-nuevo"
+                type="password"
+                value={passwordNuevo}
+                onChange={(e) => setPasswordNuevo(e.target.value)}
+                autoComplete="new-password"
+                placeholder="Mínimo 8 caracteres"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pass-confirm">Confirmar nueva contraseña</Label>
+              <Input
+                id="pass-confirm"
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            {passMsg && (
+              <p className={`text-sm font-medium ${passMsg.ok ? 'text-success-fg' : 'text-danger-fg'}`}>
+                {passMsg.text}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={passMutation.isPending}
+              loading={passMutation.isPending}
+            >
+              {passMutation.isPending ? 'Cambiando...' : 'Cambiar contraseña'}
+            </Button>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   )
 }

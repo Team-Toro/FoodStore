@@ -1,6 +1,13 @@
+// redesigned in us-009 (Phase 3 — Store: catalog, product, cart)
 import { useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useProductoDetalle } from '../../../hooks/useProductoDetalle'
 import { useCartStore } from '../../../app/store/cartStore'
+import { Dialog, DialogHeader, DialogTitle, DialogFooter } from '../../../shared/ui/Dialog'
+import { Badge } from '../../../shared/ui/Badge'
+import { Button } from '../../../shared/ui/Button'
+import { Skeleton } from '../../../shared/ui/Skeleton'
+import { cn } from '../../../shared/lib/cn'
 
 interface ProductDetailModalProps {
   productoId: number
@@ -35,158 +42,164 @@ export function ProductDetailModal({ productoId, onClose }: ProductDetailModalPr
     onClose()
   }
 
+  const totalPrice = producto ? producto.precio * cantidad : 0
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+    <Dialog
+      open
+      onClose={onClose}
+      aria-label={producto?.nombre ?? 'Detalle del producto'}
+      className="max-w-[min(95vw,48rem)] w-full"
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {isLoading ? 'Cargando...' : (producto?.nombre ?? 'Detalle del producto')}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-            aria-label="Cerrar"
-          >
-            ×
-          </button>
+      {/* Loading skeleton */}
+      {isLoading && (
+        <div className="space-y-4">
+          <Skeleton height="h-56" className="rounded-lg" />
+          <Skeleton height="h-6" width="w-3/4" />
+          <Skeleton height="h-4" width="w-full" />
+          <Skeleton height="h-4" width="w-5/6" />
         </div>
+      )}
 
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 p-4">
-          {isLoading && (
-            <div className="space-y-3 animate-pulse">
-              <div className="w-full h-48 bg-gray-200 rounded-lg" />
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
-              <div className="h-3 bg-gray-200 rounded w-full" />
-            </div>
-          )}
+      {/* Error state */}
+      {isError && (
+        <div className="text-center py-8">
+          <p className="text-danger font-medium">Error al cargar el producto. Intentá nuevamente.</p>
+          <Button variant="ghost" size="sm" className="mt-4" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
+      )}
 
-          {isError && (
-            <p className="text-red-600 text-center py-8">
-              Error al cargar el producto. Intenta nuevamente.
-            </p>
-          )}
-
-          {producto && (
-            <div className="space-y-4">
-              {/* Image */}
+      {/* Product content */}
+      {producto && (
+        <>
+          {/* Two-column at md+ */}
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Left — large image area */}
+            <div className="md:w-5/12 shrink-0">
               {producto.imagen_url ? (
                 <img
                   src={producto.imagen_url}
                   alt={producto.nombre}
-                  className="w-full h-48 object-cover rounded-lg"
+                  className="w-full aspect-[4/3] object-cover rounded-card"
                 />
               ) : (
-                <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-400">Sin imagen</span>
+                <div className="w-full aspect-[4/3] rounded-card bg-bg-subtle flex items-center justify-center">
+                  <span className="text-fg-muted text-sm">Sin imagen</span>
                 </div>
               )}
+            </div>
+
+            {/* Right — details */}
+            <div className="flex-1 flex flex-col gap-4 min-w-0">
+              <DialogHeader className="mb-0">
+                <DialogTitle className="text-xl">{producto.nombre}</DialogTitle>
+              </DialogHeader>
 
               {/* Price */}
-              <p className="text-2xl font-bold text-indigo-600">
+              <p className="text-2xl font-bold text-brand-600">
                 ${producto.precio.toFixed(2)}
               </p>
 
               {/* Description */}
               {producto.descripcion && (
-                <p className="text-gray-600 text-sm">{producto.descripcion}</p>
+                <p className="text-fg-muted text-sm leading-relaxed">{producto.descripcion}</p>
               )}
 
               {/* Categories */}
               {producto.categorias.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {producto.categorias.map((cat) => (
-                    <span
-                      key={cat.id}
-                      className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full"
-                    >
+                    <Badge key={cat.id} variant="brand">
                       {cat.nombre}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               )}
 
-              {/* Ingredients */}
+              {/* Ingredient exclusion — pill-style Badge toggles */}
               {producto.ingredientes.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Ingredientes — seleccioná los que querés excluir:
-                  </h3>
-                  <ul className="space-y-2">
-                    {producto.ingredientes.map((ing) => (
-                      <li key={ing.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`ing-${ing.id}`}
-                          checked={exclusiones.includes(ing.id)}
-                          onChange={() => toggleExclusion(ing.id)}
-                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
-                        />
-                        <label
-                          htmlFor={`ing-${ing.id}`}
-                          className="text-sm text-gray-700 flex items-center gap-1 cursor-pointer"
+                  <p className="text-sm font-semibold text-fg mb-2">
+                    Personalización — tocá para excluir:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {producto.ingredientes.map((ing) => {
+                      const excluded = exclusiones.includes(ing.id)
+                      return (
+                        <button
+                          key={ing.id}
+                          type="button"
+                          onClick={() => toggleExclusion(ing.id)}
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-badge px-3 py-1 text-xs font-medium border transition-all duration-150',
+                            excluded
+                              ? 'bg-danger-bg text-danger-fg border-danger/30 line-through opacity-70'
+                              : 'bg-bg-subtle text-fg-muted border-border hover:border-brand-400 hover:text-fg',
+                          )}
+                          aria-pressed={excluded}
                         >
                           {ing.nombre}
                           {ing.es_alergeno && (
-                            <span
-                              title="Alérgeno"
-                              className="text-orange-500 font-bold text-xs"
+                            <AlertTriangle
+                              className="h-3 w-3 text-warning-fg shrink-0"
                               aria-label="alérgeno"
-                            >
-                              ⚠
-                            </span>
+                            />
                           )}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* Quantity */}
+              {/* Quantity stepper */}
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                <span className="text-sm font-medium text-fg">Cantidad:</span>
+                <div className="inline-flex items-center border border-border rounded-btn overflow-hidden">
                   <button
+                    type="button"
                     onClick={() => setCantidad((c) => Math.max(1, c - 1))}
-                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium"
+                    className="px-3 py-2 bg-bg-subtle hover:bg-bg-elevated text-fg font-medium transition-colors"
+                    aria-label="Disminuir cantidad"
                   >
                     −
                   </button>
-                  <span className="px-4 py-1.5 text-gray-900 font-semibold min-w-[2.5rem] text-center">
+                  <span className="px-4 py-2 text-fg font-semibold min-w-[2.5rem] text-center text-sm">
                     {cantidad}
                   </span>
                   <button
+                    type="button"
                     onClick={() => setCantidad((c) => c + 1)}
-                    className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium"
+                    className="px-3 py-2 bg-bg-subtle hover:bg-bg-elevated text-fg font-medium transition-colors"
+                    aria-label="Aumentar cantidad"
                   >
                     +
                   </button>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Footer */}
-        {producto && (
-          <div className="p-4 border-t">
-            <button
-              onClick={handleAddToCart}
+          {/* Footer — price total + CTA */}
+          <DialogFooter className="mt-6 flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="text-sm text-fg-muted">
+              Total:{' '}
+              <span className="text-lg font-bold text-fg">${totalPrice.toFixed(2)}</span>
+            </div>
+            <Button
+              variant="primary"
+              size="lg"
               disabled={producto.stock === 0}
-              className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              onClick={handleAddToCart}
+              className="sm:ml-auto"
             >
               {producto.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+            </Button>
+          </DialogFooter>
+        </>
+      )}
+    </Dialog>
   )
 }

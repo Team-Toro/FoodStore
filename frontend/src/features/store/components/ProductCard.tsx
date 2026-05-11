@@ -1,5 +1,9 @@
+// redesigned in us-009 (Phase 3 — Store: catalog, product, cart)
 import type { Producto } from '../../../types/producto'
 import { useCartStore } from '../../../app/store/cartStore'
+import { Card, CardBody, CardFooter } from '../../../shared/ui/Card'
+import { Badge } from '../../../shared/ui/Badge'
+import { Button } from '../../../shared/ui/Button'
 
 interface ProductCardProps {
   producto: Producto
@@ -9,6 +13,7 @@ interface ProductCardProps {
 export function ProductCard({ producto, onOpenModal }: ProductCardProps): JSX.Element {
   const addItem = useCartStore((s) => s.addItem)
   const sinStock = producto.stock === 0
+  const pocoStock = !sinStock && producto.stock < 5
 
   function handleAddDirect(e: React.MouseEvent) {
     e.stopPropagation()
@@ -24,62 +29,71 @@ export function ProductCard({ producto, onOpenModal }: ProductCardProps): JSX.El
   }
 
   return (
-    <div
-      className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer overflow-hidden flex flex-col"
+    <Card
+      variant="elevated"
+      className="group cursor-pointer flex flex-col hover:-translate-y-1 transition-transform duration-200 hover:shadow-elevated"
       onClick={() => onOpenModal(producto.id)}
       data-testid="product-card"
     >
-      <div className="relative">
+      {/* Image — 4:3 aspect ratio */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-subtle">
         {producto.imagen_url ? (
           <img
             src={producto.imagen_url}
             alt={producto.nombre}
-            className="w-full h-48 object-cover"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-            <span className="text-gray-400 text-sm">Sin imagen</span>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-fg-muted text-sm">Sin imagen</span>
           </div>
         )}
+
+        {/* Stock badges — overlaid on image */}
         {sinStock && (
-          <span
-            className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded"
-            data-testid="sin-stock-badge"
-          >
-            Sin stock
-          </span>
+          <div className="absolute top-2 left-2">
+            <Badge variant="danger" data-testid="sin-stock-badge">Sin stock</Badge>
+          </div>
+        )}
+        {pocoStock && (
+          <div className="absolute top-2 left-2">
+            <Badge variant="warning" data-testid="poco-stock-badge">Poco stock</Badge>
+          </div>
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1 gap-2">
-        <h3 className="font-semibold text-gray-900 line-clamp-2">{producto.nombre}</h3>
+      <CardBody className="flex flex-col gap-2 flex-1 px-4 pt-3 pb-2">
+        <h3 className="font-semibold text-fg leading-snug line-clamp-2">{producto.nombre}</h3>
 
+        {/* Category badges */}
         {(producto.categorias ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1">
             {(producto.categorias ?? []).map((cat) => (
-              <span
-                key={cat.id}
-                className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full"
-              >
+              <Badge key={cat.id} variant="brand">
                 {cat.nombre}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between pt-2">
-          <span className="text-lg font-bold text-indigo-600">
-            ${producto.precio.toFixed(2)}
-          </span>
-          <button
-            onClick={handleAddDirect}
-            disabled={sinStock}
-            className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Agregar
-          </button>
-        </div>
-      </div>
-    </div>
+        {/* Price */}
+        <p className="text-brand-600 font-bold text-lg mt-auto">
+          ${producto.precio.toFixed(2)}
+        </p>
+      </CardBody>
+
+      {/* Add button — full width at card bottom */}
+      <CardFooter className="px-4 pb-4 pt-0">
+        <Button
+          variant="primary"
+          size="md"
+          disabled={sinStock}
+          onClick={handleAddDirect}
+          className="w-full"
+        >
+          Agregar
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }

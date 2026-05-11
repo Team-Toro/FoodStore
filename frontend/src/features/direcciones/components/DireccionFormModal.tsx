@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import type { DireccionCreate, DireccionRead, DireccionUpdate } from '../types'
 import { useCreateDireccion, useUpdateDireccion } from '../hooks'
+import { Input } from '../../../shared/ui/Input'
+import { Label } from '../../../shared/ui/Label'
+import { Button } from '../../../shared/ui/Button'
+import { FieldError } from '../../../shared/ui/FieldError'
 
 interface DireccionFormModalProps {
   /** If provided, the form is in edit mode */
@@ -77,121 +82,114 @@ export function DireccionFormModal({ direccion, onClose }: DireccionFormModalPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-5 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-overlay/50 p-4">
+      <div className="bg-bg rounded-xl shadow-xl w-full max-w-md border border-border">
+        <div className="flex items-center justify-between p-5 border-b border-border">
+          <h2 className="text-lg font-semibold text-fg">
             {isEdit ? 'Editar dirección' : 'Agregar dirección'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="text-fg-muted hover:text-fg transition-colors p-1 rounded focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
             aria-label="Cerrar"
           >
-            ×
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dirección <span className="text-red-500">*</span>
-            </label>
-            <input
+            <Label htmlFor="dir-linea1">
+              Dirección <span className="text-danger-fg" aria-hidden="true">*</span>
+            </Label>
+            <Input
+              id="dir-linea1"
               type="text"
               value={linea1}
               onChange={(e) => setLinea1(e.target.value)}
               placeholder="Av. Corrientes 1234"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Piso / Departamento
-            </label>
-            <input
+            <Label htmlFor="dir-linea2">Piso / Departamento</Label>
+            <Input
+              id="dir-linea2"
               type="text"
               value={linea2}
               onChange={(e) => setLinea2(e.target.value)}
               placeholder="Piso 3, Dpto B"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ciudad <span className="text-red-500">*</span>
-            </label>
-            <input
+            <Label htmlFor="dir-ciudad">
+              Ciudad <span className="text-danger-fg" aria-hidden="true">*</span>
+            </Label>
+            <Input
+              id="dir-ciudad"
               type="text"
               value={ciudad}
               onChange={(e) => setCiudad(e.target.value)}
               placeholder="Buenos Aires"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Código Postal
-            </label>
-            <input
+            <Label htmlFor="dir-cp">Código Postal</Label>
+            <Input
+              id="dir-cp"
               type="text"
               value={codigoPostal}
               onChange={(e) => setCodigoPostal(e.target.value)}
               placeholder="C1414"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Referencia
-            </label>
-            <input
+            <Label htmlFor="dir-ref">Referencia</Label>
+            <Input
+              id="dir-ref"
               type="text"
               value={referencia}
               onChange={(e) => setReferencia(e.target.value)}
               placeholder="Entre calles..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Alias
-            </label>
-            <input
+            <Label htmlFor="dir-alias">Alias</Label>
+            <Input
+              id="dir-alias"
               type="text"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
               placeholder="Casa, Trabajo..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <FieldError>{error}</FieldError>}
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              className="flex-1"
               onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
+              className="flex-1"
               disabled={isPending}
-              className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm disabled:opacity-50"
+              loading={isPending}
             >
               {isPending ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Agregar'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

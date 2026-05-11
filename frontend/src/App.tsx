@@ -13,12 +13,14 @@ import { GestionPedidos } from './features/admin/pages/GestionPedidos'
 import { AdminDashboard } from './features/admin/pages/AdminDashboard'
 import { AdminProductos } from './features/admin/pages/AdminProductos'
 import { AdminUsuarios } from './features/admin/pages/AdminUsuarios'
+import { AdminCategorias } from './features/admin/pages/AdminCategorias'
+import { AdminDirecciones } from './features/admin/pages/AdminDirecciones'
 import { DireccionesPage } from './features/direcciones/pages/DireccionesPage'
 import { PerfilPage } from './features/auth/pages/PerfilPage'
 
 function AppLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       <Header />
       <main>{children}</main>
       {/* CartDrawer lives outside route pages so it's available everywhere */}
@@ -130,6 +132,27 @@ function App(): JSX.Element {
             <RequireRoles roles={['ADMIN']}>
               <AppLayout>
                 <AdminUsuarios />
+              </AppLayout>
+            </RequireRoles>
+          }
+        />
+
+        <Route
+          path="/admin/categorias"
+          element={
+            <RequireRoles roles={['ADMIN']}>
+              <AppLayout>
+                <AdminCategorias />
+              </AppLayout>
+            </RequireRoles>
+          }
+        />
+        <Route
+          path="/admin/direcciones"
+          element={
+            <RequireRoles roles={['ADMIN']}>
+              <AppLayout>
+                <AdminDirecciones />
               </AppLayout>
             </RequireRoles>
           }

@@ -3,7 +3,7 @@
  *
  * We use msw to mock network calls in a controlled way.
  */
-import { describe, it, expect, beforeAll, afterEach, afterAll, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { useAuthStore } from '../app/store/authStore'
@@ -88,7 +88,6 @@ describe('Axios client interceptors', () => {
   })
 
   it('clears auth and redirects to /login when refresh fails', async () => {
-    const assignSpy = vi.fn()
     Object.defineProperty(window, 'location', {
       value: { href: '/' },
       writable: true,

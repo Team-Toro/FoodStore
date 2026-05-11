@@ -1,3 +1,4 @@
+// redesigned in us-009 — Phase 6
 import {
   LineChart,
   Line,
@@ -6,7 +7,14 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  type TooltipProps,
 } from 'recharts'
+import { Card } from '../../../shared/ui/Card'
+import { Button } from '../../../shared/ui/Button'
+import { Skeleton } from '../../../shared/ui/Skeleton'
+import { EmptyState } from '../../../shared/ui/EmptyState'
+import { BarChart2 } from 'lucide-react'
+import { useChartTheme } from '../hooks/useChartTheme'
 import type { VentasPorPeriodo, VentasParams } from '../../../api/admin'
 
 interface VentasLineChartProps {
@@ -24,7 +32,6 @@ const GRANULARIDADES: Array<{ value: 'day' | 'week' | 'month'; label: string }> 
 
 function formatPeriodo(raw: string, granularidad?: string): string {
   if (!raw) return raw
-  // raw comes as ISO date-like string from DATE_TRUNC
   try {
     const d = new Date(raw)
     if (granularidad === 'month') {
@@ -36,12 +43,32 @@ function formatPeriodo(raw: string, granularidad?: string): string {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Custom tooltip
+// ---------------------------------------------------------------------------
+function VentasTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null
+  const value = payload[0]?.value
+  return (
+    <Card variant="elevated" className="p-3 text-sm shadow-lg">
+      <p className="text-fg-muted mb-0.5">{label}</p>
+      <p className="font-semibold text-fg">
+        ${(value as number).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+      </p>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// VentasLineChart
+// ---------------------------------------------------------------------------
 export function VentasLineChart({
   data,
   params,
   onParamsChange,
   loading = false,
 }: VentasLineChartProps): JSX.Element {
+  const theme = useChartTheme()
   const granularidad = params.granularidad ?? 'day'
   const chartData = data.map((d) => ({
     ...d,
@@ -49,65 +76,64 @@ export function VentasLineChart({
   }))
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <Card variant="elevated" className="p-5">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-gray-900">Ventas por período</h2>
+        <h2 className="text-base font-semibold text-fg">Ventas por período</h2>
         <div className="flex gap-1">
           {GRANULARIDADES.map((g) => (
-            <button
+            <Button
               key={g.value}
+              size="sm"
+              variant={granularidad === g.value ? 'primary' : 'secondary'}
               onClick={() => onParamsChange({ ...params, granularidad: g.value })}
-              className={`px-3 py-1 rounded text-xs font-medium border transition ${
-                granularidad === g.value
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-              }`}
+              className="text-xs px-2.5 py-1"
             >
               {g.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {loading && (
-        <div className="animate-pulse h-48 bg-gray-100 rounded" />
-      )}
+      {loading && <Skeleton height="h-[220px]" />}
 
       {!loading && chartData.length === 0 && (
-        <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
-          Sin datos para el período seleccionado
-        </div>
+        <EmptyState
+          icon={BarChart2}
+          title="Sin datos"
+          description="No hay ventas registradas para el período seleccionado."
+          className="py-8"
+        />
       )}
 
       {!loading && chartData.length > 0 && (
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 11 }}
+              tick={{ fill: theme.axis, fontSize: 11 }}
               tickLine={false}
+              axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11 }}
+              tick={{ fill: theme.axis, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `$${v.toLocaleString('es-AR')}`}
             />
-            <Tooltip
-              formatter={(value: number) => [`$${value.toLocaleString('es-AR')}`, 'Total']}
-            />
+            <Tooltip content={<VentasTooltip />} />
             <Line
               type="monotone"
               dataKey="total"
-              stroke="#4f46e5"
-              strokeWidth={2}
+              stroke={theme.brand}
+              strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4 }}
+              activeDot={{ r: 4, fill: theme.brand }}
             />
           </LineChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </Card>
   )
 }

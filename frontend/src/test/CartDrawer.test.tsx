@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CartDrawer } from '../features/store/components/CartDrawer'
 import { useCartStore } from '../app/store/cartStore'
 import { useUiStore } from '../app/store/uiStore'
@@ -14,10 +15,15 @@ describe('CartDrawer — empty state', () => {
   })
 
   function renderDrawer() {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
     return render(
-      <MemoryRouter>
-        <CartDrawer />
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CartDrawer />
+        </MemoryRouter>
+      </QueryClientProvider>,
     )
   }
 

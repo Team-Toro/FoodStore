@@ -1,3 +1,227 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * =========================================================
+ * FOOD STORE — Design Token System  (Phase 1 Foundations)
+ * =========================================================
+ *
+ * BRAND PALETTE — Amber-Orange (warm, appetizing, premium)
+ *   50   #fff7ed    100  #ffedd5    200  #fed7aa
+ *   300  #fdba74    400  #fb923c    500  #f97316
+ *   600  #ea580c    700  #c2410c    800  #9a3412
+ *   900  #7c2d12
+ *
+ * ACCENT PALETTE — Teal (interactive highlights, contrast)
+ *   50   #f0fdfa    100  #ccfbf1    200  #99f6e4
+ *   300  #5eead4    400  #2dd4bf    500  #14b8a6
+ *   600  #0d9488    700  #0f766e    800  #115e59
+ *   900  #134e4a
+ *
+ * NEUTRAL PALETTE — Slate (backgrounds, foregrounds, borders)
+ *   50   #f8fafc    100  #f1f5f9    200  #e2e8f0
+ *   300  #cbd5e1    400  #94a3b8    500  #64748b
+ *   600  #475569    700  #334155    800  #1e293b
+ *   900  #0f172a
+ * =========================================================
+ */
+
+:root {
+  /* ---- Brand scale (amber-orange) ---- */
+  --brand-50:  #fff7ed;
+  --brand-100: #ffedd5;
+  --brand-200: #fed7aa;
+  --brand-300: #fdba74;
+  --brand-400: #fb923c;
+  --brand-500: #f97316;
+  --brand-600: #ea580c;
+  --brand-700: #c2410c;
+  --brand-800: #9a3412;
+  --brand-900: #7c2d12;
+
+  /* ---- Accent scale (teal) ---- */
+  --accent-50:  #f0fdfa;
+  --accent-100: #ccfbf1;
+  --accent-200: #99f6e4;
+  --accent-300: #5eead4;
+  --accent-400: #2dd4bf;
+  --accent-500: #14b8a6;
+  --accent-600: #0d9488;
+  --accent-700: #0f766e;
+  --accent-800: #115e59;
+  --accent-900: #134e4a;
+
+  /* ---- Semantic backgrounds ---- */
+  --bg:           #ffffff;
+  --bg-subtle:    #f8fafc;
+  --bg-elevated:  #ffffff;
+  --bg-overlay:   rgba(15, 23, 42, 0.50);
+
+  /* ---- Semantic foregrounds ---- */
+  --fg:         #0f172a;
+  --fg-muted:   #475569;
+  --fg-subtle:  #94a3b8;
+  --fg-on-brand: #ffffff;
+
+  /* ---- Borders ---- */
+  --border:        #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* ---- Focus ring ---- */
+  --ring: #f97316;
+
+  /* ---- Status: success ---- */
+  --success:    #16a34a;
+  --success-bg: #f0fdf4;
+  --success-fg: #14532d;
+  --success-50:  #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #10b981;
+  --success-600: #059669;
+  --success-700: #047857;
+  --success-800: #065f46;
+  --success-900: #064e3b;
+
+  /* ---- Status: warning ---- */
+  --warning:    #d97706;
+  --warning-bg: #fffbeb;
+  --warning-fg: #78350f;
+  --warning-50:  #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+
+  /* ---- Status: danger ---- */
+  --danger:    #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-fg: #7f1d1d;
+  --danger-50:  #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-300: #fca5a5;
+  --danger-400: #f87171;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  --danger-800: #991b1b;
+  --danger-900: #7f1d1d;
+
+  /* ---- Status: info ---- */
+  --info:    #2563eb;
+  --info-bg: #eff6ff;
+  --info-fg: #1e3a8a;
+  --info-50:  #eff6ff;
+  --info-100: #dbeafe;
+  --info-200: #bfdbfe;
+  --info-300: #93c5fd;
+  --info-400: #60a5fa;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+  --info-700: #1d4ed8;
+  --info-800: #1e40af;
+  --info-900: #1e3a8a;
+
+  /* ---- Typography ---- */
+  --font-sans:    'InterVariable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+                  BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+                  'Noto Sans', sans-serif;
+  --font-display: 'InterVariable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                  'Liberation Mono', 'Courier New', monospace;
+
+  /* Text size scale (mirrors Tailwind defaults, available as CSS vars for 3rd-party libs) */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
+
+  /* Line-height */
+  --leading-none:    1;
+  --leading-tight:   1.25;
+  --leading-snug:    1.375;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose:   2;
+
+  /* Letter-spacing */
+  --tracking-tight:  -0.025em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.025em;
+  --tracking-wider:   0.05em;
+  --tracking-widest:  0.1em;
+
+  /* ---- Spacing aliases ---- */
+  --space-section: 4rem;
+  --space-gutter:  1.5rem;
+
+  /* ---- Border radius ---- */
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   1rem;
+  --radius-2xl:  1.5rem;
+  --radius-full: 9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-card:    0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+  --shadow-popover: 0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  --shadow-modal:   0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10);
+  --shadow-brand:   0 4px 14px 0 rgb(249 115 22 / 0.35);
+
+  /* ---- Motion ---- */
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);
+  --ease-in:      cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-slow: 300ms;
+}
+
+/* ---- Base HTML / Body styles ---- */
+html {
+  font-family: var(--font-sans);
+  background-color: var(--bg-subtle);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+}
+
+/* Smooth scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Focus-visible ring utility */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

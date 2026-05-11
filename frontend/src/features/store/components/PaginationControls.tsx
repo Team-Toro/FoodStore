@@ -1,3 +1,6 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '../../../shared/ui/Button'
+
 interface PaginationControlsProps {
   page: number
   totalPages: number
@@ -15,23 +18,29 @@ export function PaginationControls({
 
   return (
     <div className="flex items-center justify-center gap-4 mt-8">
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onPrev}
         disabled={page <= 1}
-        className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        aria-label="Página anterior"
       >
-        ← Anterior
-      </button>
-      <span className="text-sm text-gray-600">
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        Anterior
+      </Button>
+      <span className="text-sm text-fg-muted">
         Página {page} de {totalPages}
       </span>
-      <button
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onNext}
         disabled={page >= totalPages}
-        className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        aria-label="Página siguiente"
       >
-        Siguiente →
-      </button>
+        Siguiente
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+      </Button>
     </div>
   )
 }

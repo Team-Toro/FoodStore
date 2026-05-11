@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Food Store is a full-stack e-commerce system for food products. Backend: FastAPI + SQLModel + PostgreSQL + Alembic. Frontend: React + TypeScript + Vite + TanStack Query + TanStack Form + Zustand + Tailwind CSS + Recharts. Payment integration via MercadoPago Checkout API.
 
-This is a **greenfield project** — `backend/` and `frontend/` are empty. All implementation must follow the specs in `docs/`.
+The project is **fully implemented** — all 9 user stories (us-000 → us-008) are complete and archived. Current focus: frontend redesign and UX improvements.
 
 ## Source of Truth
 
@@ -14,6 +14,7 @@ Before proposing or implementing anything, read:
 - `docs/Descripcion.txt` — vision, actors, full tech stack details
 - `docs/Integrador.txt` — ERD v5, layered architecture, FSM, API spec, Pydantic schemas, patterns
 - `docs/Historias_de_usuario.txt` — US-000 to US-076 with acceptance criteria
+- `CHANGES.md` — full changelog of everything implemented and all fixes applied
 
 ## Dev Commands
 
@@ -188,8 +189,83 @@ VITE_MP_PUBLIC_KEY=TEST-xxxx
 
 ## Implementation Order
 
+All changes are complete and archived under `openspec/changes/archive/`.
+
 ```
 us-000-setup → us-001-auth → us-002-categorias → us-003-productos →
 us-004-carrito → us-005-pedidos → us-006-pagos-mercadopago →
-us-007-admin → us-008-direcciones
+us-007-admin → us-008-direcciones  ✓ all done
 ```
+
+---
+
+## Skills Reference
+
+When to invoke each skill via the `Skill` tool. Skills are loaded automatically by context — this table tells you WHEN to trigger them explicitly.
+
+### Frontend Skills
+
+| Skill | Trigger it when... | NOT when... |
+|-------|-------------------|-------------|
+| `frontend-design` | Rediseñando o creando cualquier componente, página o layout. Mejoras visuales, e-commerce UI, landing pages. **Primera opción para cualquier trabajo de UI.** | El cambio es puramente lógico (hooks, stores, API calls) sin impacto visual. |
+| `vercel-react-best-practices` | Revisando o refactorizando componentes React. Optimización de performance (re-renders, bundle, lazy loading). Cualquier duda sobre patrones modernos de React. | Trabajando en backend o en archivos de configuración. |
+| `web-design-guidelines` | Auditando accesibilidad, revisando UX, verificando que una página sigue estándares de diseño web. Antes de dar por terminado un rediseño. | Implementación inicial — úsala para revisar, no para construir. |
+| `tailwind-design-system` | Construyendo o estandarizando un design system con tokens, variables CSS, componentes con variantes (CVA). Referencia para patrones Tailwind avanzados. | Agregando clases Tailwind sueltas a un componente existente. |
+| `dashboard-crud-page` | Creando o refactorizando cualquier página CRUD del admin (`/admin/*`). Tablas con modal de creación/edición + confirm de delete. | Páginas del catálogo cliente (store, pedidos, perfil). |
+| `recharts` | Trabajando en cualquier gráfico del dashboard admin: `VentasLineChart`, `PedidosPieChart`, `TopProductosBarChart`, `KpiCard`. | Visualizaciones fuera del admin o que no usan Recharts. |
+| `data-visualizer` | Diseñando nuevas visualizaciones o dashboards complejos desde cero. Segunda opción si `recharts` no cubre el caso. | Modificaciones menores a charts ya existentes. |
+
+### Backend Skills
+
+| Skill | Trigger it when... | NOT when... |
+|-------|-------------------|-------------|
+| `python-backend` | Escribiendo o revisando cualquier capa del backend: routers FastAPI, services, repositories, schemas Pydantic, migraciones Alembic, JWT/auth. **Primera opción para cualquier trabajo de backend.** | Trabajando exclusivamente en frontend. |
+| `payment-gateway-integration` | Modificando la integración con MercadoPago: webhook, idempotencia, preferences API, flujo de pago end-to-end. | Cambios en la lógica de negocio de pedidos sin tocar el flujo de pago. |
+
+### OPSX Workflow Skills
+
+| Comando / Skill | Cuándo usarlo |
+|-----------------|---------------|
+| `/opsx:explore` | Antes de empezar un change grande — explorar opciones, clarificar requisitos, pensar tradeoffs. Sin implementación. |
+| `/opsx:propose` | Cuando el usuario describe una feature o mejora nueva. Genera proposal + design + tasks en un paso. |
+| `/opsx:apply` | Para implementar las tasks de un change ya propuesto. Delega a sub-agente con todo el contexto. |
+| `/opsx:archive` | Cuando el change está completo (tasks done, tests verdes). Cierra y archiva los artefactos. |
+
+### Calidad y Revisión
+
+| Skill | Trigger it when... |
+|-------|-------------------|
+| `judgment-day` | Cuando el usuario dice "judgment day", "revisión adversarial", "que lo juzguen". Lanza dos jueces ciegos en paralelo. |
+| `simplify` | Después de implementar — revisar el código para detectar duplicación, abstracciones prematuras, y oportunidades de simplificación. |
+| `security-review` | Antes de cualquier cambio que toque auth, tokens, permisos, o inputs externos. |
+| `review` | Al revisar un PR completo. |
+| `web-design-guidelines` | Al auditar la UI antes de cerrar un change de frontend. |
+
+### Gestión del Proyecto
+
+| Skill | Trigger it when... |
+|-------|-------------------|
+| `issue-creation` | Creando un issue en GitHub — reportar bug, solicitar feature. |
+| `branch-pr` | Abriendo un PR — genera título, descripción y checklist automáticamente. |
+| `find-skills` | El usuario pregunta "¿hay una skill para X?" o quiere buscar nuevas capacidades. |
+| `engram:memory` | Consultar o forzar guardado de memoria. El sistema la usa automáticamente — invocar solo si hay un problema con la memoria. |
+
+### Configuración
+
+| Skill | Trigger it when... |
+|-------|-------------------|
+| `update-config` | Automatizar comportamientos ("cada vez que X, hacé Y"), cambiar permisos, configurar hooks en `settings.json`. |
+| `fewer-permission-prompts` | Hay demasiados prompts de permisos en la sesión — escanea y agrega allowlist. |
+
+---
+
+### Combinaciones frecuentes para este proyecto
+
+**Rediseño de una página del catálogo (store):**
+`/opsx:propose` → aplica → `frontend-design` + `vercel-react-best-practices` → `web-design-guidelines` para auditar → `judgment-day` si querés doble revisión → `/opsx:archive`
+
+**Nueva feature en el admin:**
+`/opsx:propose` → aplica → `dashboard-crud-page` + `python-backend` → `simplify` → `/opsx:archive`
+
+**Mejora del dashboard de métricas:**
+`/opsx:explore` → `/opsx:propose` → aplica → `recharts` + `frontend-design` → `web-design-guidelines` → `/opsx:archive`

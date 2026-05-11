@@ -157,3 +157,151 @@ export async function patchProductoDisponible(
   })
   return resp.data
 }
+
+// ---------------------------------------------------------------------------
+// Categorias (admin) — types + API
+// ---------------------------------------------------------------------------
+
+export interface CategoriaAdminRead {
+  id: number
+  nombre: string
+  padre_id: number | null
+  creado_en: string
+}
+
+export interface AdminCategoriasParams {
+  nombre?: string
+  padre_id?: number | null
+  page?: number
+  size?: number
+}
+
+export interface PaginatedCategoriasAdmin {
+  items: CategoriaAdminRead[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
+export interface CategoriaCreateBody {
+  nombre: string
+  padre_id?: number | null
+}
+
+export interface CategoriaUpdateBody {
+  nombre?: string
+  padre_id?: number | null
+}
+
+/** Flat list of all categories from the tree endpoint (reuses existing catalogo logic) */
+export async function listCategorias(
+  params?: AdminCategoriasParams,
+): Promise<PaginatedCategoriasAdmin> {
+  // The backend /categorias endpoint returns a tree; we fetch it and flatten
+  interface CategoriaTree {
+    id: number
+    nombre: string
+    padre_id: number | null
+    creado_en: string
+    hijos: CategoriaTree[]
+  }
+
+  function flattenTree(nodes: CategoriaTree[]): CategoriaAdminRead[] {
+    const result: CategoriaAdminRead[] = []
+    for (const node of nodes) {
+      result.push({ id: node.id, nombre: node.nombre, padre_id: node.padre_id, creado_en: node.creado_en })
+      if (node.hijos?.length) result.push(...flattenTree(node.hijos))
+    }
+    return result
+  }
+
+  const resp = await apiClient.get<CategoriaTree[]>('/api/v1/categorias')
+  let items = flattenTree(resp.data)
+
+  // Client-side filter by nombre
+  if (params?.nombre) {
+    const q = params.nombre.toLowerCase()
+    items = items.filter((c) => c.nombre.toLowerCase().includes(q))
+  }
+  // Client-side filter by padre_id (null = root only)
+  if (params?.padre_id !== undefined) {
+    if (params.padre_id === null) {
+      items = items.filter((c) => c.padre_id === null)
+    } else {
+      items = items.filter((c) => c.padre_id === params.padre_id)
+    }
+  }
+
+  const total = items.length
+  const page = params?.page ?? 1
+  const size = params?.size ?? 20
+  const start = (page - 1) * size
+  const paged = items.slice(start, start + size)
+  const pages = Math.max(1, Math.ceil(total / size))
+
+  return { items: paged, total, page, size, pages }
+}
+
+export async function createCategoria(body: CategoriaCreateBody): Promise<CategoriaAdminRead> {
+  const resp = await apiClient.post<CategoriaAdminRead>('/api/v1/categorias', body)
+  return resp.data
+}
+
+export async function updateCategoria(
+  id: number,
+  body: CategoriaUpdateBody,
+): Promise<CategoriaAdminRead> {
+  const resp = await apiClient.put<CategoriaAdminRead>(`/api/v1/categorias/${id}`, body)
+  return resp.data
+}
+
+export async function deleteCategoria(id: number): Promise<void> {
+  await apiClient.delete(`/api/v1/categorias/${id}`)
+}
+
+// ---------------------------------------------------------------------------
+// Direcciones (admin) — types + API
+// ---------------------------------------------------------------------------
+
+export interface DireccionAdminRead {
+  id: number
+  usuario_id: number
+  linea1: string
+  linea2: string | null
+  ciudad: string
+  codigo_postal: string | null
+  referencia: string | null
+  alias: string | null
+  es_principal: boolean
+  creado_en: string
+  actualizado_en: string
+  deleted_at: string | null
+  usuario_email?: string
+  usuario_nombre?: string
+}
+
+export interface AdminDireccionesParams {
+  usuario_email?: string
+  page?: number
+  size?: number
+}
+
+export interface PaginatedDireccionesAdmin {
+  items: DireccionAdminRead[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
+export async function listDirecciones(
+  params?: AdminDireccionesParams,
+): Promise<PaginatedDireccionesAdmin> {
+  const resp = await apiClient.get<PaginatedDireccionesAdmin>(`${BASE}/direcciones`, { params })
+  return resp.data
+}
+
+export async function softDeleteDireccion(id: number): Promise<void> {
+  await apiClient.delete(`/api/v1/direcciones/${id}`)
+}

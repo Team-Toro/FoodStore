@@ -58,11 +58,13 @@ export function useObtenerHistorial(id: number) {
 export function useCrearPedido() {
   const navigate = useNavigate()
   const clearCart = useCartStore((s) => s.clearCart)
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: CrearPedidoRequest) => crearPedido(data),
     onSuccess: (pedido) => {
       clearCart()
+      void queryClient.invalidateQueries({ queryKey: pedidosKeys.all })
       navigate(`/pedidos/${pedido.id}`)
     },
   })

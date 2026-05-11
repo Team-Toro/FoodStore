@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useCategorias } from '../../../hooks/useCategorias'
 import { apiClient } from '../../../api/axiosClient'
@@ -74,12 +75,12 @@ export function CatalogoFilters({ onFilterChange }: CatalogoFiltersProps): JSX.E
           placeholder="Buscar productos..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="flex-1 border border-border rounded-lg px-4 py-2 text-sm bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
         <select
           value={selectedCategoria ?? ''}
           onChange={handleCategoriaChange}
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+          className="border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-bg text-fg"
         >
           <option value="">Todas las categorías</option>
           {categorias.map((cat) => (
@@ -92,7 +93,7 @@ export function CatalogoFilters({ onFilterChange }: CatalogoFiltersProps): JSX.E
 
       {alergenos.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-500 mr-1">Excluir alérgenos:</span>
+          <span className="text-xs font-medium text-fg-muted mr-1">Excluir alérgenos:</span>
           {alergenos.map((al) => {
             const active = excluidos.has(al.id)
             return (
@@ -102,11 +103,11 @@ export function CatalogoFilters({ onFilterChange }: CatalogoFiltersProps): JSX.E
                 onClick={() => toggleAlergeno(al.id)}
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   active
-                    ? 'bg-red-100 border-red-400 text-red-700'
-                    : 'bg-gray-100 border-gray-300 text-gray-600 hover:border-red-300 hover:text-red-600'
+                    ? 'bg-danger-bg border-danger text-danger-fg'
+                    : 'bg-bg-subtle border-border text-fg-muted hover:border-danger/50 hover:text-danger-fg'
                 }`}
               >
-                {active && <span className="mr-1">✕</span>}
+                {active && <X className="h-3 w-3 mr-1" aria-hidden="true" />}
                 {al.nombre}
               </button>
             )
@@ -115,7 +116,7 @@ export function CatalogoFilters({ onFilterChange }: CatalogoFiltersProps): JSX.E
             <button
               type="button"
               onClick={() => setExcluidos(new Set())}
-              className="text-xs text-gray-400 hover:text-gray-600 underline ml-1"
+              className="text-xs text-fg-muted hover:text-fg underline ml-1 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded"
             >
               Limpiar
             </button>

@@ -1,4 +1,6 @@
+// redesigned in us-009 — Phase 6
 import { useState } from 'react'
+import { DollarSign, ShoppingCart, Users, Package } from 'lucide-react'
 import { KpiCard } from '../components/KpiCard'
 import { VentasLineChart } from '../components/VentasLineChart'
 import { PedidosPieChart } from '../components/PedidosPieChart'
@@ -9,6 +11,8 @@ import {
   useTopProductos,
   usePedidosPorEstado,
 } from '../hooks/useAdminMetricas'
+import { PageHeader } from '../../../shared/ui'
+import { Input } from '../../../shared/ui'
 import type { VentasParams } from '../../../api/admin'
 
 // ---------------------------------------------------------------------------
@@ -49,31 +53,34 @@ export function AdminDashboard(): JSX.Element {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
+      <PageHeader
+        title="Dashboard"
+        description="Resumen operativo del negocio."
+        breadcrumb={[{ label: 'Admin' }, { label: 'Dashboard' }]}
+        actions={
+          /* Date range selector */
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="text-sm text-fg-muted">Desde:</label>
+            <Input
+              type="date"
+              value={desde}
+              max={hasta}
+              onChange={(e) => setDesde(e.target.value)}
+              className="w-36"
+            />
+            <label className="text-sm text-fg-muted">Hasta:</label>
+            <Input
+              type="date"
+              value={hasta}
+              min={desde}
+              onChange={(e) => setHasta(e.target.value)}
+              className="w-36"
+            />
+          </div>
+        }
+      />
 
-        {/* Date range selector — task 10.3 */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-sm text-gray-600">Desde:</label>
-          <input
-            type="date"
-            value={desde}
-            max={hasta}
-            onChange={(e) => setDesde(e.target.value)}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-          />
-          <label className="text-sm text-gray-600">Hasta:</label>
-          <input
-            type="date"
-            value={hasta}
-            min={desde}
-            onChange={(e) => setHasta(e.target.value)}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* KPI cards — task 10.1 */}
+      {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard
           title="Ventas totales"
@@ -86,25 +93,29 @@ export function AdminDashboard(): JSX.Element {
               : null
           }
           loading={loadingResumen}
+          icon={DollarSign}
         />
         <KpiCard
           title="Pedidos"
           value={resumen?.pedidos_totales}
           loading={loadingResumen}
+          icon={ShoppingCart}
         />
         <KpiCard
           title="Usuarios activos"
           value={resumen?.usuarios_activos}
           loading={loadingResumen}
+          icon={Users}
         />
         <KpiCard
           title="Productos activos"
           value={resumen?.productos_activos}
           loading={loadingResumen}
+          icon={Package}
         />
       </div>
 
-      {/* Charts — task 10.2 */}
+      {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <VentasLineChart
           data={ventas}

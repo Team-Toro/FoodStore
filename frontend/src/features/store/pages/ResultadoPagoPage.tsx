@@ -14,9 +14,10 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
 import { usePaymentStore } from '../../../app/store/paymentStore'
+import { Button } from '../../../shared/ui/Button'
 import { crearPago, obtenerPago } from '../api/pagosApi'
-
 export function ResultadoPagoPage(): JSX.Element {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
@@ -90,31 +91,31 @@ export function ResultadoPagoPage(): JSX.Element {
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         {confirmed ? (
           <>
-            <div className="text-green-500 text-5xl">&#10003;</div>
-            <h1 className="text-2xl font-bold text-gray-900">Pago aprobado</h1>
-            <p className="text-gray-600">Tu pedido está siendo preparado.</p>
-            <p className="text-sm text-gray-400">Redirigiendo a tu pedido...</p>
+            <CheckCircle2 className="h-16 w-16 text-success-fg mx-auto" aria-hidden="true" />
+            <h1 className="text-2xl font-bold text-fg">Pago aprobado</h1>
+            <p className="text-fg-muted">Tu pedido está siendo preparado.</p>
+            <p className="text-sm text-fg-muted/60">Redirigiendo a tu pedido...</p>
           </>
         ) : pollingTimeout ? (
           <>
-            <div className="text-yellow-500 text-5xl">&#9888;</div>
-            <h1 className="text-2xl font-bold text-gray-900">Pago en proceso</h1>
-            <p className="text-gray-600">
+            <Clock className="h-16 w-16 text-warning-fg mx-auto" aria-hidden="true" />
+            <h1 className="text-2xl font-bold text-fg">Pago en proceso</h1>
+            <p className="text-fg-muted">
               Tu pago fue aprobado pero la confirmación del pedido está demorando.
               Revisá el estado en Mis Pedidos.
             </p>
             <Link
               to={`/pedidos/${pedidoId}`}
-              className="inline-block mt-2 text-indigo-600 hover:underline"
+              className="inline-block mt-2 text-brand-600 hover:underline focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded"
             >
               Ver pedido #{pedidoId}
             </Link>
           </>
         ) : (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto" />
-            <h1 className="text-2xl font-bold text-gray-900">Pago aprobado</h1>
-            <p className="text-gray-600">Confirmando tu pedido...</p>
+            <Loader2 className="h-12 w-12 text-success-fg mx-auto animate-spin" aria-label="Confirmando pago..." />
+            <h1 className="text-2xl font-bold text-fg">Pago aprobado</h1>
+            <p className="text-fg-muted">Confirmando tu pedido...</p>
           </>
         )}
       </div>
@@ -124,25 +125,26 @@ export function ResultadoPagoPage(): JSX.Element {
   if (status === 'rejected') {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-        <div className="text-red-500 text-5xl">&#10007;</div>
-        <h1 className="text-2xl font-bold text-gray-900">Pago rechazado</h1>
-        <p className="text-gray-600">
+        <XCircle className="h-16 w-16 text-danger-fg mx-auto" aria-hidden="true" />
+        <h1 className="text-2xl font-bold text-fg">Pago rechazado</h1>
+        <p className="text-fg-muted">
           El pago no pudo procesarse. Podés intentarlo con otra tarjeta.
         </p>
         {retryError && (
-          <p className="text-sm text-red-600">{retryError}</p>
+          <p className="text-sm text-danger-fg">{retryError}</p>
         )}
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
-          <button
+          <Button
+            variant="primary"
             onClick={() => void handleRetry()}
             disabled={retryLoading}
-            className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            loading={retryLoading}
           >
-            {retryLoading ? 'Cargando...' : 'Reintentar pago'}
-          </button>
+            Reintentar pago
+          </Button>
           <Link
             to="/pedidos"
-            className="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-btn bg-bg-subtle text-fg border border-border hover:bg-bg-elevated shadow-sm transition-all duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             Mis Pedidos
           </Link>
@@ -154,14 +156,14 @@ export function ResultadoPagoPage(): JSX.Element {
   // pending / in_process / default
   return (
     <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-      <div className="text-yellow-500 text-5xl">&#9679;</div>
-      <h1 className="text-2xl font-bold text-gray-900">Pago pendiente</h1>
-      <p className="text-gray-600">
+      <Clock className="h-16 w-16 text-warning-fg mx-auto" aria-hidden="true" />
+      <h1 className="text-2xl font-bold text-fg">Pago pendiente</h1>
+      <p className="text-fg-muted">
         Tu pago está siendo procesado. Te notificaremos cuando se acredite.
       </p>
       <Link
         to={`/pedidos/${pedidoId}`}
-        className="inline-block mt-2 text-indigo-600 hover:underline"
+        className="inline-block mt-2 text-brand-600 hover:underline focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded"
       >
         Ver estado del pedido
       </Link>
