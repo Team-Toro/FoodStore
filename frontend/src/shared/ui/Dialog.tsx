@@ -5,6 +5,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '../lib/cn'
 
 export interface DialogProps {
@@ -37,6 +38,9 @@ export interface DialogProps {
  *   handling natively.
  * - `dismissable` (default `true`) controls whether Escape and backdrop
  *   clicks trigger `onClose`.
+ * - Rendered via a portal to `document.body` so the `<dialog>` element is
+ *   never mounted inside invalid container elements (e.g., `<tbody>`),
+ *   eliminating `validateDOMNesting` warnings regardless of where Dialog is used.
  */
 export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(
   (
@@ -100,7 +104,7 @@ export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(
       [dismissable, onClose]
     )
 
-    return (
+    const dialogElement = (
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
       <dialog
         ref={ref}
@@ -133,6 +137,12 @@ export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(
         </div>
       </dialog>
     )
+
+    // Render via portal to document.body so <dialog> is never a descendant
+    // of invalid container elements (e.g., <tbody>), eliminating
+    // validateDOMNesting warnings regardless of where Dialog is used.
+    // This project uses Vite (client-side only) — no SSR, so no mounted guard needed.
+    return createPortal(dialogElement, document.body)
   }
 )
 

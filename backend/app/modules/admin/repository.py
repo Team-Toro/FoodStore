@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -101,6 +101,70 @@ class AdminRepository:
         )
         await self.session.execute(stmt)
         await self.session.flush()
+
+    async def listar_direcciones_admin(
+        self,
+        usuario_email: Optional[str],
+        page: int,
+        size: int,
+    ) -> tuple[List[Any], int]:
+        """Paginated listing of all delivery addresses with optional email filter.
+
+        Joins with Usuario to surface email + nombre.
+        Returns (items_as_dicts, total_count).
+        """
+        from app.modules.direcciones.model import DireccionEntrega
+
+        # Build base query joining to usuario for email/nombre
+        base_stmt = (
+            select(
+                DireccionEntrega,
+                text("u.email AS u_email"),
+                text("CONCAT(u.nombre, ' ', u.apellido) AS u_nombre"),
+            )
+            .join(
+                text("usuario u"),
+                DireccionEntrega.usuario_id == text("u.id"),
+            )
+        )
+
+        if usuario_email:
+            pattern = f"%{usuario_email}%"
+            base_stmt = base_stmt.where(text("u.email ILIKE :email_pattern")).params(email_pattern=pattern)
+
+        # Count
+        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        count_result = await self.session.execute(count_stmt)
+        total = int(count_result.scalar_one())
+
+        # Paginate
+        paged_stmt = base_stmt.offset((page - 1) * size).limit(size)
+        result = await self.session.execute(paged_stmt)
+        rows = result.all()
+
+        items = []
+        for row in rows:
+            direccion = row[0]  # DireccionEntrega instance
+            u_email = row[1]
+            u_nombre = row[2]
+            items.append({
+                "id": direccion.id,
+                "usuario_id": direccion.usuario_id,
+                "linea1": direccion.linea1,
+                "linea2": direccion.linea2,
+                "ciudad": direccion.ciudad,
+                "codigo_postal": direccion.codigo_postal,
+                "referencia": direccion.referencia,
+                "alias": direccion.alias,
+                "es_principal": direccion.es_principal,
+                "creado_en": direccion.creado_en,
+                "actualizado_en": direccion.actualizado_en,
+                "eliminado_en": direccion.eliminado_en,
+                "usuario_email": u_email,
+                "usuario_nombre": u_nombre,
+            })
+
+        return items, total
 
     async def get_roles_by_codigos(self, codigos: List[str]) -> List[Any]:
         """Return Rol instances for the given codes."""

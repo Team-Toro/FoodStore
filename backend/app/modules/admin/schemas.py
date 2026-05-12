@@ -112,3 +112,38 @@ class PaginatedProductosAdmin(BaseModel):
     page: int
     size: int
     pages: int
+
+
+# ---------------------------------------------------------------------------
+# Admin Direcciones schemas
+# ---------------------------------------------------------------------------
+
+class DireccionAdminRead(BaseModel):
+    """Admin view of a delivery address — includes owning user info."""
+
+    id: int
+    usuario_id: int
+    linea1: str
+    linea2: Optional[str] = None
+    ciudad: str
+    codigo_postal: Optional[str] = None
+    referencia: Optional[str] = None
+    alias: Optional[str] = None
+    es_principal: bool
+    creado_en: datetime
+    actualizado_en: datetime
+    eliminado_en: Optional[datetime] = None
+    usuario_email: Optional[str] = None
+    usuario_nombre: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class PaginatedDireccionesAdmin(BaseModel):
+    """Paginated response for admin direcciones listing."""
+
+    items: List[DireccionAdminRead]
+    total: int
+    page: int
+    size: int
+    pages: int

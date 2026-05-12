@@ -3,6 +3,7 @@ import { LoginPage } from './features/auth/pages/LoginPage'
 import { RegisterPage } from './features/auth/pages/RegisterPage'
 import { RequireAuth } from './features/auth/components/RequireAuth'
 import { RequireRoles } from './features/auth/components/RequireRoles'
+import { RequireNonAdmin } from './features/auth/components/RequireNonAdmin'
 import { Header } from './shared/ui/Header'
 import { CatalogoPage } from './features/store/pages/CatalogoPage'
 import { CartDrawer } from './features/store/components/CartDrawer'
@@ -12,19 +13,24 @@ import { DetallePedidoPage } from './features/pedidos/pages/DetallePedidoPage'
 import { GestionPedidos } from './features/admin/pages/GestionPedidos'
 import { AdminDashboard } from './features/admin/pages/AdminDashboard'
 import { AdminProductos } from './features/admin/pages/AdminProductos'
+import { AdminIngredientes } from './features/admin/pages/AdminIngredientes'
 import { AdminUsuarios } from './features/admin/pages/AdminUsuarios'
 import { AdminCategorias } from './features/admin/pages/AdminCategorias'
 import { AdminDirecciones } from './features/admin/pages/AdminDirecciones'
 import { DireccionesPage } from './features/direcciones/pages/DireccionesPage'
 import { PerfilPage } from './features/auth/pages/PerfilPage'
+import { useMe } from './features/auth/hooks/useMe'
 
 function AppLayout({ children }: { children: React.ReactNode }): JSX.Element {
+  const { data: user } = useMe()
+  const isAdmin = user?.roles.includes('ADMIN') ?? false
+
   return (
     <div className="min-h-screen bg-bg">
       <Header />
       <main>{children}</main>
-      {/* CartDrawer lives outside route pages so it's available everywhere */}
-      <CartDrawer />
+      {/* CartDrawer lives outside route pages — hidden for ADMIN users */}
+      {!isAdmin && <CartDrawer />}
     </div>
   )
 }
@@ -37,15 +43,15 @@ function App(): JSX.Element {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes */}
+        {/* Protected routes — CLIENT only (ADMIN redirected to /admin) */}
         <Route
           path="/catalogo"
           element={
-            <RequireAuth>
+            <RequireNonAdmin>
               <AppLayout>
                 <CatalogoPage />
               </AppLayout>
-            </RequireAuth>
+            </RequireNonAdmin>
           }
         />
 
@@ -53,31 +59,31 @@ function App(): JSX.Element {
         <Route
           path="/pedidos"
           element={
-            <RequireAuth>
+            <RequireNonAdmin>
               <AppLayout>
                 <MisPedidos />
               </AppLayout>
-            </RequireAuth>
+            </RequireNonAdmin>
           }
         />
         <Route
           path="/pedidos/:id"
           element={
-            <RequireAuth>
+            <RequireNonAdmin>
               <AppLayout>
                 <DetallePedidoPage />
               </AppLayout>
-            </RequireAuth>
+            </RequireNonAdmin>
           }
         />
         <Route
           path="/pedidos/:id/resultado"
           element={
-            <RequireAuth>
+            <RequireNonAdmin>
               <AppLayout>
                 <ResultadoPagoPage />
               </AppLayout>
-            </RequireAuth>
+            </RequireNonAdmin>
           }
         />
 
@@ -153,6 +159,16 @@ function App(): JSX.Element {
             <RequireRoles roles={['ADMIN']}>
               <AppLayout>
                 <AdminDirecciones />
+              </AppLayout>
+            </RequireRoles>
+          }
+        />
+        <Route
+          path="/admin/ingredientes"
+          element={
+            <RequireRoles roles={['ADMIN']}>
+              <AppLayout>
+                <AdminIngredientes />
               </AppLayout>
             </RequireRoles>
           }

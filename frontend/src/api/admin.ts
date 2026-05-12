@@ -305,3 +305,65 @@ export async function listDirecciones(
 export async function softDeleteDireccion(id: number): Promise<void> {
   await apiClient.delete(`/api/v1/direcciones/${id}`)
 }
+
+// ---------------------------------------------------------------------------
+// Ingredientes (admin) — types + API
+// ---------------------------------------------------------------------------
+
+export interface IngredienteAdminRead {
+  id: number
+  nombre: string
+  descripcion: string | null
+  es_alergeno: boolean
+  creado_en: string
+}
+
+export interface PaginatedIngredientesAdmin {
+  items: IngredienteAdminRead[]
+  total: number
+  page: number
+  size: number
+  pages: number
+}
+
+export interface AdminIngredientesParams {
+  es_alergeno?: boolean
+  page?: number
+  size?: number
+}
+
+export interface IngredienteCreateBody {
+  nombre: string
+  descripcion?: string | null
+  es_alergeno: boolean
+}
+
+export interface IngredienteUpdateBody {
+  nombre?: string
+  descripcion?: string | null
+  es_alergeno?: boolean
+}
+
+export async function listIngredientes(
+  params?: AdminIngredientesParams,
+): Promise<PaginatedIngredientesAdmin> {
+  const resp = await apiClient.get<PaginatedIngredientesAdmin>('/api/v1/ingredientes', { params })
+  return resp.data
+}
+
+export async function createIngrediente(body: IngredienteCreateBody): Promise<IngredienteAdminRead> {
+  const resp = await apiClient.post<IngredienteAdminRead>('/api/v1/ingredientes', body)
+  return resp.data
+}
+
+export async function updateIngrediente(
+  id: number,
+  body: IngredienteUpdateBody,
+): Promise<IngredienteAdminRead> {
+  const resp = await apiClient.put<IngredienteAdminRead>(`/api/v1/ingredientes/${id}`, body)
+  return resp.data
+}
+
+export async function deleteIngrediente(id: number): Promise<void> {
+  await apiClient.delete(`/api/v1/ingredientes/${id}`)
+}
