@@ -1,7 +1,7 @@
 // redesigned in us-009 (Phase 7 — Header, mobile nav, and final polish)
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { ShoppingBag, Menu, X, User, LogOut, ChevronDown, Home, UtensilsCrossed, ClipboardList, LayoutDashboard, FolderOpen, MapPin, PackageSearch, Users, FlaskConical } from 'lucide-react'
+import { ShoppingBag, Menu, X, User, LogOut, ChevronDown, UtensilsCrossed, ClipboardList, LayoutDashboard, FolderOpen, MapPin, PackageSearch, Users, FlaskConical } from 'lucide-react'
 import { useLogout } from '../../features/auth/hooks/useLogout'
 import { useMe } from '../../features/auth/hooks/useMe'
 import { useCartStore } from '../../app/store/cartStore'
@@ -73,9 +73,6 @@ export function Header(): JSX.Element {
   // ---- Desktop nav links ----
   const desktopNavLinks = (
     <nav aria-label="Navegación principal" className="hidden md:flex items-center gap-1">
-      <NavLink to={isAdmin ? "/admin" : "/"} end={!isAdmin} className={navLinkClass}>
-        Inicio
-      </NavLink>
       {!isAdmin && (
         <NavLink to="/catalogo" className={navLinkClass}>
           Menú
@@ -281,9 +278,6 @@ export function Header(): JSX.Element {
 
           {/* Nav links */}
           <nav aria-label="Navegación móvil" className="space-y-0.5 px-1">
-            <MobileNavLink to={isAdmin ? "/admin" : "/"} end={!isAdmin} icon={<Home className="h-4 w-4" />} onClick={closeSidebar}>
-              Inicio
-            </MobileNavLink>
             {!isAdmin && (
               <MobileNavLink to="/catalogo" icon={<UtensilsCrossed className="h-4 w-4" />} onClick={closeSidebar}>
                 Menú
