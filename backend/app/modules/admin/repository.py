@@ -115,25 +115,28 @@ class AdminRepository:
         """
         from app.modules.direcciones.model import DireccionEntrega
 
-        # Build base query joining to usuario for email/nombre
+        # Build base query — explicit select_from so ORM knows the join root
         base_stmt = (
             select(
                 DireccionEntrega,
-                text("u.email AS u_email"),
-                text("CONCAT(u.nombre, ' ', u.apellido) AS u_nombre"),
+                Usuario.email.label("usuario_email"),
+                func.concat(Usuario.nombre, " ", Usuario.apellido).label("usuario_nombre"),
             )
-            .join(
-                text("usuario u"),
-                DireccionEntrega.usuario_id == text("u.id"),
-            )
+            .select_from(DireccionEntrega)
+            .join(Usuario, DireccionEntrega.usuario_id == Usuario.id)
         )
 
         if usuario_email:
-            pattern = f"%{usuario_email}%"
-            base_stmt = base_stmt.where(text("u.email ILIKE :email_pattern")).params(email_pattern=pattern)
+            base_stmt = base_stmt.where(Usuario.email.ilike(f"%{usuario_email}%"))
 
-        # Count
-        count_stmt = select(func.count()).select_from(base_stmt.subquery())
+        # Count — select_from is required so SQLAlchemy knows the FROM clause
+        count_stmt = (
+            select(func.count())
+            .select_from(DireccionEntrega)
+            .join(Usuario, DireccionEntrega.usuario_id == Usuario.id)
+        )
+        if usuario_email:
+            count_stmt = count_stmt.where(Usuario.email.ilike(f"%{usuario_email}%"))
         count_result = await self.session.execute(count_stmt)
         total = int(count_result.scalar_one())
 
@@ -159,7 +162,7 @@ class AdminRepository:
                 "es_principal": direccion.es_principal,
                 "creado_en": direccion.creado_en,
                 "actualizado_en": direccion.actualizado_en,
-                "eliminado_en": direccion.eliminado_en,
+                "deleted_at": direccion.eliminado_en,
                 "usuario_email": u_email,
                 "usuario_nombre": u_nombre,
             })

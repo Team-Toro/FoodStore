@@ -132,7 +132,7 @@ class DireccionAdminRead(BaseModel):
     es_principal: bool
     creado_en: datetime
     actualizado_en: datetime
-    eliminado_en: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
     usuario_email: Optional[str] = None
     usuario_nombre: Optional[str] = None
 
