@@ -73,12 +73,14 @@ export function Header(): JSX.Element {
   // ---- Desktop nav links ----
   const desktopNavLinks = (
     <nav aria-label="Navegación principal" className="hidden md:flex items-center gap-1">
-      <NavLink to="/" end className={navLinkClass}>
+      <NavLink to={isAdmin ? "/admin" : "/"} end={!isAdmin} className={navLinkClass}>
         Inicio
       </NavLink>
-      <NavLink to="/catalogo" className={navLinkClass}>
-        Menú
-      </NavLink>
+      {!isAdmin && (
+        <NavLink to="/catalogo" className={navLinkClass}>
+          Menú
+        </NavLink>
+      )}
       {isClient && (
         <NavLink to="/pedidos" className={navLinkClass}>
           Mis Pedidos
@@ -279,12 +281,14 @@ export function Header(): JSX.Element {
 
           {/* Nav links */}
           <nav aria-label="Navegación móvil" className="space-y-0.5 px-1">
-            <MobileNavLink to="/" end icon={<Home className="h-4 w-4" />} onClick={closeSidebar}>
+            <MobileNavLink to={isAdmin ? "/admin" : "/"} end={!isAdmin} icon={<Home className="h-4 w-4" />} onClick={closeSidebar}>
               Inicio
             </MobileNavLink>
-            <MobileNavLink to="/catalogo" icon={<UtensilsCrossed className="h-4 w-4" />} onClick={closeSidebar}>
-              Menú
-            </MobileNavLink>
+            {!isAdmin && (
+              <MobileNavLink to="/catalogo" icon={<UtensilsCrossed className="h-4 w-4" />} onClick={closeSidebar}>
+                Menú
+              </MobileNavLink>
+            )}
             {isClient && (
               <MobileNavLink to="/pedidos" icon={<ClipboardList className="h-4 w-4" />} onClick={closeSidebar}>
                 Mis Pedidos

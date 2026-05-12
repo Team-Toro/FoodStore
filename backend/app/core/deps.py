@@ -11,7 +11,7 @@ from app.core.security import decode_access_token
 from app.core.uow import UnitOfWork
 
 # auto_error=False so we can return custom TOKEN_MISSING code
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token", auto_error=False)
 
 
 class CurrentUser(BaseModel):

@@ -1,5 +1,6 @@
 """Auth router — 5 endpoints: register, login, refresh, logout, me."""
 from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.deps import CurrentUser, get_current_user
 from app.core.limiter import limiter
@@ -41,6 +42,29 @@ async def login(
     """Validate credentials and return a JWT token pair."""
     async with UnitOfWork() as uow:
         return await auth_service.login(uow, data)
+
+
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="OAuth2 password flow token endpoint (ReDoc/Swagger UI)",
+    include_in_schema=True,
+)
+@limiter.limit("5/15minutes")
+async def token(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+) -> TokenResponse:
+    """OAuth2 Password Grant — form-encoded.
+
+    Maps `username` → email so that ReDoc's "Authorize" button works
+    with standard OAuth2 tooling. Behaviour and error codes are identical
+    to the JSON ``/login`` endpoint.
+    """
+    login_data = LoginRequest(username=form_data.username, password=form_data.password)
+    async with UnitOfWork() as uow:
+        return await auth_service.login(uow, login_data)
 
 
 @router.post(

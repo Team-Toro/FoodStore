@@ -35,6 +35,15 @@ function AppLayout({ children }: { children: React.ReactNode }): JSX.Element {
   )
 }
 
+function HomeRedirect(): JSX.Element {
+  const { data: user, isLoading } = useMe()
+  if (isLoading) return <></>
+  if (user?.roles.includes('ADMIN') || user?.roles.includes('PEDIDOS') || user?.roles.includes('STOCK')) {
+    return <Navigate to="/admin" replace />
+  }
+  return <Navigate to="/catalogo" replace />
+}
+
 function App(): JSX.Element {
   return (
     <BrowserRouter>
@@ -190,7 +199,7 @@ function App(): JSX.Element {
           path="/"
           element={
             <RequireAuth>
-              <Navigate to="/catalogo" replace />
+              <HomeRedirect />
             </RequireAuth>
           }
         />
