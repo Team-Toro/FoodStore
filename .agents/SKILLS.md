@@ -19,6 +19,14 @@ If the task involves charts or the admin dashboard:
 If the task involves building or reviewing a design system or Tailwind tokens:
 - Load `tailwind-design-system`
 
+## Skill Availability
+
+Project-local skills live under:
+- `.agents/skills/<skill-name>/SKILL.md` (agent runner)
+- `.claude/skills/<skill-name>/SKILL.md` (Claude Code)
+
+When adding a new skill, keep both locations in sync and update this registry with the trigger rules.
+
 ## Backend Tasks
 
 If the task involves FastAPI routers, services, repositories, Pydantic schemas, or Alembic:
