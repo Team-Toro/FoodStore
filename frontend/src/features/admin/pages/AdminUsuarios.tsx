@@ -1,6 +1,6 @@
 // redesigned in us-009 — Phase 6
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Users } from 'lucide-react'
+import { Users, ShieldOff } from 'lucide-react'
 import { useAdminUsuarios, useUpdateEstado, useUpdateRoles } from '../hooks/useAdminUsuarios'
 import type { UsuarioAdminRead } from '../../../api/admin'
 import {
@@ -25,6 +25,51 @@ import {
 const ROLES_DISPONIBLES = ['ADMIN', 'STOCK', 'PEDIDOS', 'CLIENT'] as const
 
 // ---------------------------------------------------------------------------
+// Error code → user-facing message mapping
+// ---------------------------------------------------------------------------
+interface ApiErrorShape {
+  response?: {
+    status?: number
+    headers?: Record<string, string>
+    data?: {
+      detail?: string
+      code?: string
+    }
+  }
+}
+
+function extractApiError(err: unknown): string {
+  const apiErr = err as ApiErrorShape
+  const status = apiErr?.response?.status
+  const errorCode = apiErr?.response?.headers?.['x-error-code']
+  const detail = apiErr?.response?.data?.detail
+  const code = apiErr?.response?.data?.code ?? errorCode
+
+  // Business-rule specific messages
+  if (code === 'LAST_ADMIN' || code === 'LAST_ADMIN_PROTECTED') {
+    return 'No se puede quitar el rol ADMIN al último administrador del sistema.'
+  }
+  if (code === 'SELF_DEACTIVATION' || code === 'SELF_DEACTIVATION_FORBIDDEN') {
+    return 'No puedes desactivar tu propia cuenta.'
+  }
+  if (status === 403) {
+    return 'No tenés permisos para realizar esta acción.'
+  }
+  if (status === 404) {
+    return 'Usuario no encontrado.'
+  }
+  if (detail) {
+    return detail
+  }
+  return 'Ocurrió un error inesperado. Intentá nuevamente.'
+}
+
+function isForbiddenError(err: unknown): boolean {
+  const apiErr = err as ApiErrorShape
+  return apiErr?.response?.status === 403
+}
+
+// ---------------------------------------------------------------------------
 // EditRolesModal
 // ---------------------------------------------------------------------------
 interface EditRolesModalProps {
@@ -36,6 +81,15 @@ function EditRolesModal({ usuario, onClose }: EditRolesModalProps): JSX.Element 
   const [roles, setRoles] = useState<string[]>(usuario.roles)
   const [apiError, setApiError] = useState<string | null>(null)
   const mutation = useUpdateRoles()
+  const firstCheckboxRef = useRef<HTMLInputElement>(null)
+
+  // Focus first checkbox when modal opens for keyboard accessibility
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      firstCheckboxRef.current?.focus()
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
 
   function toggleRol(rol: string) {
     setRoles((prev) =>
@@ -50,10 +104,7 @@ function EditRolesModal({ usuario, onClose }: EditRolesModalProps): JSX.Element 
       {
         onSuccess: () => onClose(),
         onError: (err: unknown) => {
-          const msg =
-            (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-            'Error al actualizar roles'
-          setApiError(msg)
+          setApiError(extractApiError(err))
         },
       },
     )
@@ -71,20 +122,22 @@ function EditRolesModal({ usuario, onClose }: EditRolesModalProps): JSX.Element 
       </DialogHeader>
 
       <div className="px-6 py-4 space-y-2">
-        {ROLES_DISPONIBLES.map((rol) => (
+        {ROLES_DISPONIBLES.map((rol, idx) => (
           <label key={rol} className="flex items-center gap-2 cursor-pointer text-sm text-fg">
             <input
+              ref={idx === 0 ? firstCheckboxRef : undefined}
               type="checkbox"
               checked={roles.includes(rol)}
               onChange={() => toggleRol(rol)}
               className="rounded border-border text-brand-500 focus:ring-ring"
+              aria-label={`Rol ${rol}`}
             />
             {rol}
           </label>
         ))}
 
         {apiError && (
-          <p className="text-sm text-danger-fg mt-2">{apiError}</p>
+          <p role="alert" className="text-sm text-danger-fg mt-2">{apiError}</p>
         )}
       </div>
 
@@ -129,10 +182,7 @@ function ConfirmEstadoModal({
       {
         onSuccess: () => onClose(),
         onError: (err: unknown) => {
-          const msg =
-            (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-            'Error al actualizar estado'
-          setApiError(msg)
+          setApiError(extractApiError(err))
         },
       },
     )
@@ -159,7 +209,7 @@ function ConfirmEstadoModal({
       </DialogHeader>
 
       {apiError && (
-        <p className="px-6 pb-0 pt-2 text-sm text-danger-fg">{apiError}</p>
+        <p role="alert" className="px-6 pb-0 pt-2 text-sm text-danger-fg">{apiError}</p>
       )}
 
       <DialogFooter>
@@ -206,12 +256,14 @@ export function AdminUsuarios(): JSX.Element {
     }
   }, [])
 
-  const { data, isLoading, isError } = useAdminUsuarios({
+  const { data, isLoading, isError, error } = useAdminUsuarios({
     q: debouncedQ || undefined,
     rol: rol || undefined,
     page,
     size,
   })
+
+  const isForbidden = isError && isForbiddenError(error)
 
   const [editRolesUser, setEditRolesUser] = useState<UsuarioAdminRead | null>(null)
   const [confirmEstadoUser, setConfirmEstadoUser] = useState<{
@@ -256,6 +308,14 @@ export function AdminUsuarios(): JSX.Element {
       ),
     },
     {
+      header: 'Creado',
+      render: (u: UsuarioAdminRead) => (
+        <span className="text-fg-muted text-xs">
+          {new Date(u.created_at).toLocaleDateString('es-AR')}
+        </span>
+      ),
+    },
+    {
       header: 'Acciones',
       align: 'right' as const,
       render: (u: UsuarioAdminRead) => (
@@ -264,6 +324,7 @@ export function AdminUsuarios(): JSX.Element {
             variant="secondary"
             size="sm"
             onClick={() => setEditRolesUser(u)}
+            aria-label={`Editar roles de ${u.nombre} ${u.apellido}`}
           >
             Roles
           </Button>
@@ -272,6 +333,7 @@ export function AdminUsuarios(): JSX.Element {
             size="sm"
             className={u.activo ? 'text-warning-fg hover:bg-warning-bg' : undefined}
             onClick={() => setConfirmEstadoUser({ user: u, nextActivo: !u.activo })}
+            aria-label={`${u.activo ? 'Desactivar' : 'Activar'} a ${u.nombre} ${u.apellido}`}
           >
             {u.activo ? 'Desactivar' : 'Activar'}
           </Button>
@@ -279,6 +341,26 @@ export function AdminUsuarios(): JSX.Element {
       ),
     },
   ]
+
+  // 403 forbidden state
+  if (isForbidden) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <PageHeader
+          title="Usuarios"
+          description="Gestioná usuarios, roles y estados de acceso."
+          breadcrumb={[{ label: 'Admin' }, { label: 'Usuarios' }]}
+        />
+        <div className="mt-12 flex flex-col items-center gap-4 text-center">
+          <ShieldOff className="h-12 w-12 text-fg-muted" aria-hidden="true" />
+          <h2 className="text-lg font-semibold text-fg">Sin permisos</h2>
+          <p className="text-sm text-fg-muted max-w-sm">
+            No tenés permisos para gestionar usuarios. Esta sección requiere el rol ADMIN.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -297,6 +379,7 @@ export function AdminUsuarios(): JSX.Element {
               value={q}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-64"
+              aria-label="Buscar usuarios por nombre o email"
             />
             <Select
               value={rol}
@@ -305,6 +388,7 @@ export function AdminUsuarios(): JSX.Element {
                 setPage(1)
               }}
               className="w-44"
+              aria-label="Filtrar por rol"
             >
               <option value="">Todos los roles</option>
               {ROLES_DISPONIBLES.map((r) => (
@@ -317,8 +401,10 @@ export function AdminUsuarios(): JSX.Element {
         }
       />
 
-      {isError && (
-        <p className="text-danger-fg text-center py-8">Error al cargar los usuarios.</p>
+      {isError && !isForbidden && (
+        <p role="alert" className="text-danger-fg text-center py-8">
+          Error al cargar los usuarios. Intentá nuevamente.
+        </p>
       )}
 
       <DataTable

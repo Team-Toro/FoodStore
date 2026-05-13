@@ -10,6 +10,7 @@ from app.core.uow import UnitOfWork
 from app.modules.admin import service as admin_service
 from app.modules.admin.schemas import (
     EstadoUpdateRequest,
+    PaginatedDireccionesAdmin,
     PaginatedProductosAdmin,
     PaginatedUsuariosAdmin,
     PedidosPorEstado,
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 _usuario_svc = admin_service.AdminUsuarioService()
 _metricas_svc = admin_service.AdminMetricasService()
+_direcciones_svc = admin_service.AdminDireccionesService()
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +101,24 @@ async def listar_productos_admin(
             page=page,
             size=size,
             pages=pages,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Direcciones admin endpoint
+# ---------------------------------------------------------------------------
+
+@router.get("/direcciones", response_model=PaginatedDireccionesAdmin)
+async def listar_direcciones_admin(
+    current_user: Annotated[CurrentUser, Depends(require_roles("ADMIN"))],
+    usuario_email: Optional[str] = None,
+    page: int = 1,
+    size: int = 20,
+) -> PaginatedDireccionesAdmin:
+    """List all delivery addresses across users (paginated). Requires ADMIN role."""
+    async with UnitOfWork() as uow:
+        return await _direcciones_svc.listar_direcciones(
+            uow, usuario_email=usuario_email, page=page, size=size
         )
 
 

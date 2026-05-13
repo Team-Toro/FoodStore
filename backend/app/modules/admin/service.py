@@ -7,6 +7,8 @@ from typing import Optional
 from fastapi import HTTPException, status
 
 from app.modules.admin.schemas import (
+    DireccionAdminRead,
+    PaginatedDireccionesAdmin,
     PaginatedUsuariosAdmin,
     PedidosPorEstado,
     ResumenMetricas,
@@ -174,6 +176,37 @@ class AdminUsuarioService:
             created_at=usuario.creado_en,
             roles=roles,
             deleted_at=usuario.eliminado_en,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Direcciones admin service
+# ---------------------------------------------------------------------------
+
+class AdminDireccionesService:
+    """Business logic for admin direcciones listing."""
+
+    async def listar_direcciones(
+        self,
+        uow: object,
+        usuario_email: Optional[str],
+        page: int,
+        size: int,
+    ) -> PaginatedDireccionesAdmin:
+        repo = uow.admin  # type: ignore[attr-defined]
+        items_data, total = await repo.listar_direcciones_admin(
+            usuario_email=usuario_email, page=page, size=size
+        )
+
+        pages = math.ceil(total / size) if size > 0 else 0
+        items = [DireccionAdminRead(**d) for d in items_data]
+
+        return PaginatedDireccionesAdmin(
+            items=items,
+            total=total,
+            page=page,
+            size=size,
+            pages=pages,
         )
 
 

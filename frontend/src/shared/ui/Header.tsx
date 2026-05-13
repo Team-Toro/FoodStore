@@ -1,7 +1,7 @@
 // redesigned in us-009 (Phase 7 — Header, mobile nav, and final polish)
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { ShoppingBag, Menu, X, User, LogOut, ChevronDown, Home, UtensilsCrossed, ClipboardList, LayoutDashboard, FolderOpen, MapPin, PackageSearch } from 'lucide-react'
+import { ShoppingBag, Menu, X, User, LogOut, ChevronDown, UtensilsCrossed, ClipboardList, LayoutDashboard, FolderOpen, MapPin, PackageSearch, Users, FlaskConical } from 'lucide-react'
 import { useLogout } from '../../features/auth/hooks/useLogout'
 import { useMe } from '../../features/auth/hooks/useMe'
 import { useCartStore } from '../../app/store/cartStore'
@@ -67,23 +67,24 @@ export function Header(): JSX.Element {
   const isPedidos = user?.roles.includes('PEDIDOS') ?? false
   const isGestion = isAdmin || isPedidos
   const isClient = user?.roles.includes('CLIENT') ?? false
+  // ADMIN users do not use the cart/checkout flow
+  const showCart = !isAdmin
 
   // ---- Desktop nav links ----
   const desktopNavLinks = (
     <nav aria-label="Navegación principal" className="hidden md:flex items-center gap-1">
-      <NavLink to="/" end className={navLinkClass}>
-        Inicio
-      </NavLink>
-      <NavLink to="/catalogo" className={navLinkClass}>
-        Menú
-      </NavLink>
+      {!isAdmin && (
+        <NavLink to="/catalogo" className={navLinkClass}>
+          Menú
+        </NavLink>
+      )}
       {isClient && (
         <NavLink to="/pedidos" className={navLinkClass}>
           Mis Pedidos
         </NavLink>
       )}
       {isGestion && (
-        <NavLink to="/admin" className={navLinkClass}>
+        <NavLink to="/admin" end className={navLinkClass}>
           Gestión
         </NavLink>
       )}
@@ -100,6 +101,16 @@ export function Header(): JSX.Element {
       {isAdmin && (
         <NavLink to="/admin/direcciones" className={navLinkClass}>
           Direcciones
+        </NavLink>
+      )}
+      {isAdmin && (
+        <NavLink to="/admin/usuarios" className={navLinkClass}>
+          Usuarios
+        </NavLink>
+      )}
+      {isAdmin && (
+        <NavLink to="/admin/ingredientes" className={navLinkClass}>
+          Ingredientes
         </NavLink>
       )}
     </nav>
@@ -141,23 +152,25 @@ export function Header(): JSX.Element {
           {/* --- Right side actions --- */}
           <div className="flex items-center gap-2">
 
-            {/* Cart icon button */}
-            <button
-              onClick={openCart}
-              className="relative p-1.5 rounded-md text-fg-muted hover:text-brand-600 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none transition-colors"
-              aria-label={`Abrir carrito${itemCount > 0 ? `, ${itemCount} ${itemCount === 1 ? 'producto' : 'productos'}` : ''}`}
-            >
-              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-              {itemCount > 0 && (
-                <span
-                  className="absolute -top-1 -right-1 bg-brand-500 text-white text-[0.625rem] font-bold rounded-full min-w-[1.125rem] h-[1.125rem] px-0.5 flex items-center justify-center animate-in zoom-in-50 duration-150"
-                  data-testid="cart-badge"
-                  aria-hidden="true"
-                >
-                  {itemCount > 99 ? '99+' : itemCount}
-                </span>
-              )}
-            </button>
+            {/* Cart icon button — hidden for ADMIN */}
+            {showCart && (
+              <button
+                onClick={openCart}
+                className="relative p-1.5 rounded-md text-fg-muted hover:text-brand-600 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none transition-colors"
+                aria-label={`Abrir carrito${itemCount > 0 ? `, ${itemCount} ${itemCount === 1 ? 'producto' : 'productos'}` : ''}`}
+              >
+                <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                {itemCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 bg-brand-500 text-white text-[0.625rem] font-bold rounded-full min-w-[1.125rem] h-[1.125rem] px-0.5 flex items-center justify-center animate-in zoom-in-50 duration-150"
+                    data-testid="cart-badge"
+                    aria-hidden="true"
+                  >
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* User menu (desktop) */}
             {user ? (
@@ -265,19 +278,18 @@ export function Header(): JSX.Element {
 
           {/* Nav links */}
           <nav aria-label="Navegación móvil" className="space-y-0.5 px-1">
-            <MobileNavLink to="/" end icon={<Home className="h-4 w-4" />} onClick={closeSidebar}>
-              Inicio
-            </MobileNavLink>
-            <MobileNavLink to="/catalogo" icon={<UtensilsCrossed className="h-4 w-4" />} onClick={closeSidebar}>
-              Menú
-            </MobileNavLink>
+            {!isAdmin && (
+              <MobileNavLink to="/catalogo" icon={<UtensilsCrossed className="h-4 w-4" />} onClick={closeSidebar}>
+                Menú
+              </MobileNavLink>
+            )}
             {isClient && (
               <MobileNavLink to="/pedidos" icon={<ClipboardList className="h-4 w-4" />} onClick={closeSidebar}>
                 Mis Pedidos
               </MobileNavLink>
             )}
             {isGestion && (
-              <MobileNavLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />} onClick={closeSidebar}>
+              <MobileNavLink to="/admin" end icon={<LayoutDashboard className="h-4 w-4" />} onClick={closeSidebar}>
                 Gestión
               </MobileNavLink>
             )}
@@ -294,6 +306,16 @@ export function Header(): JSX.Element {
             {isAdmin && (
               <MobileNavLink to="/admin/direcciones" icon={<MapPin className="h-4 w-4" />} onClick={closeSidebar}>
                 Direcciones
+              </MobileNavLink>
+            )}
+            {isAdmin && (
+              <MobileNavLink to="/admin/usuarios" icon={<Users className="h-4 w-4" />} onClick={closeSidebar}>
+                Usuarios
+              </MobileNavLink>
+            )}
+            {isAdmin && (
+              <MobileNavLink to="/admin/ingredientes" icon={<FlaskConical className="h-4 w-4" />} onClick={closeSidebar}>
+                Ingredientes
               </MobileNavLink>
             )}
             {user && (
